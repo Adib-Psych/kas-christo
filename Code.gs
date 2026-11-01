@@ -172,8 +172,14 @@ function handle_(role, b, ctx) {
       const ex = ctx.store.tx[n.id];
       const bank = { id: n.id, rek: n.rek, tanggal: str_(n.tanggal, 10), jam: str_(n.jam, 5), arah: n.arah === 'masuk' ? 'masuk' : 'keluar', jumlah: Math.round(+n.jumlah || 0), biaya: Math.round(+n.biaya || 0), uraian: str_(n.uraian, 200), saldoBank: n.saldoBank == null ? null : Math.round(+n.saldoBank), sumber: 'mutasi' };
       if (ex) { put_(ctx, 'tx', n.id, Object.assign({}, ex, bank)); diperbarui++; return; }
-      const m = manual.find(t => t.rek === bank.rek && t.tanggal === bank.tanggal && t.arah === bank.arah && totalOf_(t) === totalOf_(bank) && !t._dipakai);
+      // pasangkan dengan catatan manual Christo: rekening & arah sama, tanggal selisih ≤ 1 hari,
+      // jumlah sama dengan jumlah bank ATAU total bank (termasuk biaya transfer)
+      const dekat = (a, b2) => Math.abs(new Date(a + 'T00:00:00Z') - new Date(b2 + 'T00:00:00Z')) <= 86400000;
+      const cocok = t => t.rek === bank.rek && t.arah === bank.arah && !t._dipakai && dekat(t.tanggal, bank.tanggal) &&
+        (Math.round(+t.jumlah || 0) === bank.jumlah || totalOf_(t) === totalOf_(bank));
+      const m = manual.filter(cocok).sort((x, y) => (x.tanggal === bank.tanggal ? 0 : 1) - (y.tanggal === bank.tanggal ? 0 : 1))[0];
       let rec = Object.assign({ alokasi: [], ket: '', nota: [], dibuat: now }, bank);
+      if (m && (m.alokasi || []).length === 1) m.alokasi = [{ pos: m.alokasi[0].pos, jumlah: totalOf_(bank), ket: m.alokasi[0].ket || '' }];
       if (m) { m._dipakai = true; rec = Object.assign(rec, { alokasi: m.alokasi || [], ket: m.ket || '', nota: m.nota || [], dipilahOleh: m.dipilahOleh || '', dipilahPada: m.dipilahPada || '', dikunci: !!m.dikunci, dariManual: m.id }); del_(ctx, 'tx', m.id); digabung++; }
       else if (Array.isArray(n.alokasi) && n.alokasi.length) { rec.alokasi = cleanAlok_(bank, n.alokasi); rec.dipilahOleh = 'otomatis'; }
       put_(ctx, 'tx', n.id, rec); baru++;
