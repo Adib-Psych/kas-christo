@@ -344,7 +344,7 @@ details.set .in{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
     <div class="hgrid">
       <div><span>Sudah lengkap</span><b id="hOk">–</b></div>
       <div><span>Belum ada catatan</span><b id="hNoNote">–</b></div>
-      <div><span>Tertukar rekening</span><b id="hSwap">–</b></div>
+      <div hidden><span>Tertukar rekening</span><b id="hSwap">–</b></div>
     </div>
     <div class="hacts"><button class="hbtn" type="button" id="goPilah">Mulai pilah ↓</button><button class="hbtn alt" type="button" id="addTop">+ Catat transaksi baru</button></div>
   </section>
@@ -385,7 +385,7 @@ details.set .in{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
     <div class="sec-head"><h2 id="listT">Transaksi</h2><button class="btn small" type="button" id="addBtn">+ Catat transaksi baru</button></div>
     <div class="seg" role="group" aria-label="Tampilan">
       <button type="button" data-v="todo" aria-pressed="true" id="vTodo">Perlu diisi</button>
-      <button type="button" data-v="swap" aria-pressed="false" id="vSwap">Tertukar</button>
+      <button type="button" data-v="swap" aria-pressed="false" id="vSwap" hidden>Tertukar</button>
       <button type="button" data-v="all" aria-pressed="false" id="vAll">Semua</button>
     </div>
     <div class="filters">
@@ -495,8 +495,11 @@ const noteOptional=t=>t.alokasi&&t.alokasi.length&&t.alokasi.every(a=>a.pos==="b
 const needsNote=t=>t.arah==="keluar"&&t.alokasi&&t.alokasi.length&&!(t.ket||"").trim()&&!noteOptional(t);
 // "Perlu diisi" = belum dipilah atau belum ada catatan. Masuk hanya untuk Adib.
 const askedByAdib=t=>!t.dikunci&&!!(t.catatanAdib||"").trim()&&!(t.ket||"").trim();
-const isTodo=t=>{if(askedByAdib(t))return true;if(t.arah==="masuk")return !t.dikunci&&!(t.ket||"").trim();return !(t.alokasi&&t.alokasi.length)||needsNote(t);};
+const SHOW_SWAP=false; // konteks "tertukar rekening" disembunyikan dulu (keputusan Adib 1 Nov)
+const isTodo=t=>{if(t.tanggal<ATURAN_MULAI&&!askedByAdib(t))return false; // sebelum rekening BRI dibuka: tidak perlu diisi
+if(askedByAdib(t))return true;if(t.arah==="masuk")return !t.dikunci&&!(t.ket||"").trim();return !(t.alokasi&&t.alokasi.length)||needsNote(t);};
 function swapPart(t){ // bagian yang tertukar rekening (keluar saja)
+  if(!SHOW_SWAP)return 0;
   if(t.arah!=="keluar"||!t.alokasi||t.tanggal<ATURAN_MULAI)return 0;
   return t.alokasi.reduce((s,a)=>{const r=POS[a.pos]&&POS[a.pos].rek;return s+((r&&r!=="*"&&r!==t.rek)?a.jumlah:0);},0);
 }
@@ -593,7 +596,7 @@ function renderReport(){
   h+=REP_KEYS.map(([k,l,sb])=>row(k,l,sb,sum[k]||0)).join("");
   if(un)h+=row(null,"Belum dipilah","",un);
   const minor=[];
-  if(sum.pribadi)minor.push(row("pribadi","Pribadi","tertukar rekening",sum.pribadi,true));
+  if(sum.pribadi)minor.push(row("pribadi","Pribadi","keperluan pribadi dari BRI",sum.pribadi,true));
   if(sum.lain)minor.push(row("lain","Lainnya","",sum.lain,true));
   if(sum.pindah)minor.push(row("pindah","Pindah rekening","",sum.pindah,true));
   if(sum.bank)minor.push(row("bank","Biaya bank","",sum.bank,true));
@@ -727,7 +730,7 @@ function editor(t,isNew){
   };
   box.appendChild(posWrap);
   const warn=el("div");box.appendChild(warn);
-  const drawWarn=()=>{warn.innerHTML="";if(inn)return;
+  const drawWarn=()=>{warn.innerHTML="";if(inn||!SHOW_SWAP)return;
     const sw=draft.alokasi.filter(a=>POS[a.pos]&&POS[a.pos].rek!=="*"&&POS[a.pos].rek!==t.rek);
     if(sw.length){const w=el("div","warnbox");const amt=sw.reduce((s,a)=>s+(a.jumlah||0),0);
       w.innerHTML=t.rek==="BRI"?"<b>Tertukar rekening.</b> Keperluan pribadi "+rp(amt)+" dibayar dari BRI. Tetap simpan apa adanya; nanti diganti dari BCA.":"<b>Tertukar rekening.</b> "+sw.map(a=>POS[a.pos].lab).join(", ")+" "+rp(amt)+" dibayar dari BCA. Tetap simpan apa adanya; nanti diganti dari BRI.";
@@ -857,7 +860,7 @@ function renderRecap(){
     parts.forEach(([k,v])=>{if(v){const i=el("i");i.style.width=(v/tot*100)+"%";i.style.background=COLOR(k);i.title=POS[k].lab+" "+rp(v);st.appendChild(i);}});
     if(r.un){const i=el("i");i.style.width=(r.un/tot*100)+"%";i.style.background="repeating-linear-gradient(45deg,var(--line) 0 4px,transparent 4px 8px)";i.title="Belum dipilah "+rp(r.un);st.appendChild(i);}
     d.appendChild(st);mb.appendChild(d);});
-  $("mLegend").innerHTML=keys.map(k=>'<span style="--c:'+COLOR(k)+'">'+POS[k].lab+'</span>').join("")+'<span style="--c:var(--pribadi)">Pribadi (tertukar)</span><span style="--c:var(--lain)">Lain-lain & biaya</span><span style="--c:var(--line)">Belum dipilah</span>';
+  $("mLegend").innerHTML=keys.map(k=>'<span style="--c:'+COLOR(k)+'">'+POS[k].lab+'</span>').join("")+'<span style="--c:var(--pribadi)">Pribadi</span><span style="--c:var(--lain)">Lain-lain & biaya</span><span style="--c:var(--line)">Belum dipilah</span>';
   const th='<thead><tr><th>Bulan</th><th>BRI masuk</th>'+keys.map(k=>'<th>'+POS[k].lab+'</th>').join("")+'<th>Pribadi dari BRI</th><th>Lain & biaya</th><th>Belum dipilah</th><th>BCA keluar</th></tr></thead>';
   const f=v=>v?fmt.format(v):"–";
   $("recapTbl").innerHTML=th+'<tbody>'+(rows.slice().reverse().map(r=>'<tr><td>'+BLN[+r.m.slice(5)-1]+' '+r.m.slice(2,4)+'</td><td>'+f(r.inBRI)+'</td>'+keys.map(k=>'<td>'+f(r[k])+'</td>').join("")+'<td class="'+(r.pribBRI?"bad":"")+'">'+f(r.pribBRI)+'</td><td>'+f(r.etc)+'</td><td class="'+(r.un?"bad":"")+'">'+f(r.un)+'</td><td>'+f(r.bca)+'</td></tr>').join("")||'<tr><td colspan="9">Belum ada data</td></tr>')+'</tbody>';
@@ -940,7 +943,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("viewer").hidden
 
 // ================================================================ boot
 // versi halaman: kalau HP masih memegang versi lama (cache), muat ulang sekali ke versi terbaru
-const PAGE_VERSION="2026-11-01g";
+const PAGE_VERSION="2026-11-01h";
 (async()=>{try{const r=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/PAGE_VERSION="([^"]+)"/);
   if(m&&m[1]!==PAGE_VERSION){let done=null;try{done=sessionStorage.getItem("kcReload");}catch(_){}if(done!==m[1]){try{sessionStorage.setItem("kcReload",m[1]);}catch(_){}location.reload();}}}catch(_){}})();
 try{key=localStorage.getItem(KEY_STORE);}catch(_){}
