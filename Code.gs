@@ -135,6 +135,7 @@ function cleanAlok_(t, alok) {
   if (sum !== totalOf_(t)) throw new Error('alokasi_tidak_cocok');
   return a;
 }
+function rek_(r) { return r === 'BCA' ? 'BCA' : r === 'CC' ? 'CC' : 'BRI'; }
 function str_(v, n) { return String(v == null ? '' : v).slice(0, n || 300); }
 
 function handle_(role, b, ctx) {
@@ -168,7 +169,7 @@ function handle_(role, b, ctx) {
     let baru = 0, diperbarui = 0, digabung = 0;
     const manual = Object.values(ctx.store.tx || {}).filter(t => t.sumber === 'manual');
     list.forEach(n => {
-      if (!n || !n.id || !/^(BRI|BCA)$/.test(n.rek)) return;
+      if (!n || !n.id || !/^(BRI|BCA|CC)$/.test(n.rek)) return;
       const ex = ctx.store.tx[n.id];
       const bank = { id: n.id, rek: n.rek, tanggal: str_(n.tanggal, 10), jam: str_(n.jam, 5), arah: n.arah === 'masuk' ? 'masuk' : 'keluar', jumlah: Math.round(+n.jumlah || 0), biaya: Math.round(+n.biaya || 0), uraian: str_(n.uraian, 200), saldoBank: n.saldoBank == null ? null : Math.round(+n.saldoBank), sumber: 'mutasi' };
       if (ex) { put_(ctx, 'tx', n.id, Object.assign({}, ex, bank)); diperbarui++; return; }
@@ -204,7 +205,7 @@ function handle_(role, b, ctx) {
   if (op === 'add') {
     const d = b.data || {};
     const nid = 'man-' + Utilities.getUuid().slice(0, 12);
-    const t = { id: nid, rek: d.rek === 'BCA' ? 'BCA' : 'BRI', tanggal: str_(d.tanggal, 10), jam: str_(d.jam, 5), arah: d.arah === 'masuk' ? 'masuk' : 'keluar', jumlah: Math.round(+d.jumlah || 0), biaya: Math.round(+d.biaya || 0), uraian: str_(d.uraian, 200), sumber: 'manual', ket: str_(d.ket, 300), nota: Array.isArray(d.nota) ? d.nota.slice(0, 6).map(String) : [], dibuat: now, oleh: role };
+    const t = { id: nid, rek: rek_(d.rek), tanggal: str_(d.tanggal, 10), jam: str_(d.jam, 5), arah: d.arah === 'masuk' ? 'masuk' : 'keluar', jumlah: Math.round(+d.jumlah || 0), biaya: Math.round(+d.biaya || 0), uraian: str_(d.uraian, 200), sumber: 'manual', ket: str_(d.ket, 300), nota: Array.isArray(d.nota) ? d.nota.slice(0, 6).map(String) : [], dibuat: now, oleh: role };
     if (!/^\d{4}-\d{2}-\d{2}$/.test(t.tanggal) || t.jumlah <= 0) throw new Error('isian');
     if (t.arah === 'masuk' && !isAdib) deny_();
     t.alokasi = cleanAlok_(t, d.alokasi);
@@ -232,7 +233,7 @@ function handle_(role, b, ctx) {
     if (cur.sumber === 'manual' && cur.oleh === 'christo') {
       ['tanggal', 'uraian'].forEach(k => { if (k in d) next[k] = str_(d[k], k === 'tanggal' ? 10 : 200); });
       if ('jumlah' in d) next.jumlah = Math.round(+d.jumlah || 0);
-      if ('rek' in d) next.rek = d.rek === 'BCA' ? 'BCA' : 'BRI';
+      if ('rek' in d) next.rek = rek_(d.rek);
       if ('jumlah' in d && !('alokasi' in d) && (next.alokasi || []).length === 1) next.alokasi = [{ pos: next.alokasi[0].pos, jumlah: totalOf_(next), ket: '' }];
     }
   } else {
@@ -242,7 +243,7 @@ function handle_(role, b, ctx) {
     if ('dikunci' in d) { next.dikunci = !!d.dikunci; next.dikunciPada = d.dikunci ? now : ''; }
     if (cur.sumber === 'manual') {
       if ('jumlah' in d) next.jumlah = Math.round(+d.jumlah || 0);
-      if ('rek' in d) next.rek = d.rek === 'BCA' ? 'BCA' : 'BRI';
+      if ('rek' in d) next.rek = rek_(d.rek);
     }
     if ('alokasi' in d) { next.alokasi = cleanAlok_(next, d.alokasi); next.dipilahOleh = 'adib'; next.dipilahPada = now; }
   }
