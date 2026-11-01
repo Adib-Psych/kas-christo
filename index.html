@@ -104,6 +104,9 @@ header .sub{font-size:13px;color:var(--muted)}
 .hgrid span{font-size:11.5px;color:var(--on-hero-muted)}
 .hgrid b{font:600 15px/1.25 var(--f-num);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .hgrid b.warn{color:#FFC47A}
+.hacts{display:flex;gap:8px;flex-wrap:wrap}
+.hbtn.alt{background:transparent;color:var(--on-hero);border:1.5px solid rgba(255,255,255,.5)}
+.fab{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:40;border:0;border-radius:999px;padding:14px 18px;font:800 15px var(--f-ui);background:var(--hero);color:var(--on-hero);box-shadow:0 10px 26px -8px rgba(0,0,0,.45);cursor:pointer}
 .hbtn{align-self:flex-start;border:0;border-radius:999px;padding:10px 16px;font:800 14px var(--f-ui);background:var(--on-hero);color:var(--hero);cursor:pointer}
 
 /* ---------- rekening rule ---------- */
@@ -306,7 +309,7 @@ details.set .in{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
       <div><span>Belum ada catatan</span><b id="hNoNote">–</b></div>
       <div><span>Tertukar rekening</span><b id="hSwap">–</b></div>
     </div>
-    <button class="hbtn" type="button" id="goPilah">Mulai pilah ↓</button>
+    <div class="hacts"><button class="hbtn" type="button" id="goPilah">Mulai pilah ↓</button><button class="hbtn alt" type="button" id="addTop">+ Catat transaksi baru</button></div>
   </section>
 
   <div class="notice" id="accessNote" hidden></div>
@@ -342,7 +345,7 @@ details.set .in{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
 
   <!-- DAFTAR TRANSAKSI -->
   <section aria-labelledby="listT" id="listSec">
-    <div class="sec-head"><h2 id="listT">Transaksi</h2><button class="btn small ghost" type="button" id="addBtn">+ Transaksi baru</button></div>
+    <div class="sec-head"><h2 id="listT">Transaksi</h2><button class="btn small" type="button" id="addBtn">+ Catat transaksi baru</button></div>
     <div class="seg" role="group" aria-label="Tampilan">
       <button type="button" data-v="todo" aria-pressed="true" id="vTodo">Perlu diisi</button>
       <button type="button" data-v="swap" aria-pressed="false" id="vSwap">Tertukar</button>
@@ -395,6 +398,7 @@ details.set .in{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
 
   <div class="foot"><span id="who"></span><span id="sync"></span><span>Data tersimpan di Google Sheet milik Adib · cadangan otomatis tiap Senin</span></div>
 </div>
+<button class="fab" type="button" id="fab" hidden aria-label="Catat transaksi baru">+ Catat</button>
 <div class="snack" id="snack" hidden role="status"></div>
 <div class="viewer" id="viewer" hidden></div>
 
@@ -714,7 +718,7 @@ function editor(t,isNew){
 
   // aksi
   const acts=el("div","acts");const save=el("button","btn",isNew?"Simpan transaksi":"Simpan");save.type="button";
-  const cancel=el("button","btn ghost","Tutup");cancel.type="button";cancel.onclick=()=>{openId=null;draft=null;if(isNew){$("addCard").hidden=true;}renderList();};
+  const cancel=el("button","btn ghost","Tutup");cancel.type="button";cancel.onclick=()=>{openId=null;draft=null;if(isNew){$("addCard").hidden=true;$("fab").hidden=false;}renderList();};
   acts.append(save,cancel);if(lockedForMe)save.hidden=true;
   if(!isNew&&t.sumber==="manual"&&(isAdib()||(t.oleh==="christo"&&!t.dikunci))){const del=el("button","btn danger small","Hapus");del.type="button";
     let armed=false;del.onclick=async()=>{if(!armed){armed=true;del.textContent="Ketuk lagi untuk hapus";setTimeout(()=>{armed=false;del.textContent="Hapus";},4000);return;}
@@ -738,7 +742,7 @@ function editor(t,isNew){
     if(canPos)data.alokasi=draft.alokasi.map(a=>({pos:a.pos,jumlah:a.jumlah}));
     if(isAdib()&&!isNew){data.dikunci=draft.dikunci;data.catatanAdib=draft.catatanAdib.trim();}
     try{
-      if(isNew){Object.assign(data,t.__base());await write({op:"add",col:"tx",data});$("addCard").hidden=true;snack("Transaksi tersimpan");}
+      if(isNew){Object.assign(data,t.__base());await write({op:"add",col:"tx",data});$("addCard").hidden=true;$("fab").hidden=false;snack("Transaksi tersimpan");}
       else{await write({op:"update",col:"tx",id:t.id,data});snack("Tersimpan ✓");}
       openId=null;draft=null;renderAll();
       if(!isNew&&view==="todo"){const next=filtered()[0];if(next&&isTodo(next)){openId=next.id;renderList();const e=document.getElementById("ed-"+next.id);e&&e.scrollIntoView({block:"center",behavior:"smooth"});}}
@@ -749,7 +753,7 @@ function editor(t,isNew){
 
 // ---------------------------------------------------------------- transaksi baru (manual)
 function openAdd(){
-  const card=$("addCard");card.hidden=false;card.innerHTML="";openId=null;renderList();
+  const card=$("addCard");card.hidden=false;$("fab").hidden=true;card.innerHTML="";openId=null;renderList();
   const head=el("div","ed");head.style.borderTop="0";
   head.appendChild(el("h3",null,"Transaksi baru"));
   head.appendChild(Object.assign(el("div","hint"),{textContent:"Untuk transaksi yang belum ada di mutasi bank, atau rincian belanja tunai. Saat mutasi bank masuk, catatan ini otomatis digabung dengan baris banknya (rekening, tanggal, dan jumlah yang sama)."}));
@@ -846,7 +850,7 @@ function gate(t,m,ask){$("gate").hidden=false;$("app").hidden=true;$("gateTitle"
 function logout(){key=null;try{localStorage.removeItem(KEY_STORE);}catch(_){}gate("Link sudah tidak berlaku","Minta link baru ke Adib lewat WhatsApp, lalu buka link itu di HP ini.",true);}
 
 function start(){
-  $("gate").hidden=true;$("app").hidden=false;
+  $("gate").hidden=true;$("app").hidden=false;$("fab").hidden=false;
   $("who").textContent="Masuk sebagai "+(isAdib()?"Adib":"Christo");
   if(isAdib()){$("settings").hidden=false;$("linkBox").hidden=!linkChristo;const sa=(cfg().saldoAwal||{}).BCA||{};$("sBCA").value=sa.jumlah?fmt.format(sa.jumlah):"";$("sBCAtgl").value=sa.tanggal||"2026-09-01";}
   renderAll();
@@ -863,7 +867,7 @@ document.querySelectorAll(".seg button").forEach(b=>b.addEventListener("click",(
 ["fMonth","fRek","fPos"].forEach(id=>$(id).addEventListener("change",renderList));
 $("repMonth").addEventListener("change",renderReport);
 $("goPilah").onclick=()=>{setView("todo");$("listSec").scrollIntoView({behavior:"smooth"});};
-$("addBtn").onclick=openAdd;
+$("addBtn").onclick=openAdd;$("addTop").onclick=openAdd;$("fab").onclick=openAdd;
 $("copyBtn").onclick=async()=>{const t=waText();try{await navigator.clipboard.writeText(t);$("copyMsg").textContent="Tersalin ✓";$("copyMsg").className="msg ok";}catch(_){const ta=el("textarea");ta.value=t;ta.rows=8;ta.readOnly=true;$("copyMsg").replaceChildren(ta);ta.select();}};
 $("copyLink").onclick=async()=>{const b=$("copyLink");try{await navigator.clipboard.writeText(linkChristo);b.textContent="Tersalin ✓";}catch(_){b.replaceWith(Object.assign(el("input"),{value:linkChristo,readOnly:true}));}setTimeout(()=>{b.textContent="Salin link Christo";},2500);};
 $("sBCA").addEventListener("input",e=>{const n=digits(e.target.value);e.target.value=n?fmt.format(n):"";});
@@ -878,7 +882,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("viewer").hidden
 
 // ================================================================ boot
 // versi halaman: kalau HP masih memegang versi lama (cache), muat ulang sekali ke versi terbaru
-const PAGE_VERSION="2026-11-01c";
+const PAGE_VERSION="2026-11-01d";
 (async()=>{try{const r=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/PAGE_VERSION="([^"]+)"/);
   if(m&&m[1]!==PAGE_VERSION){let done=null;try{done=sessionStorage.getItem("kcReload");}catch(_){}if(done!==m[1]){try{sessionStorage.setItem("kcReload",m[1]);}catch(_){}location.reload();}}}catch(_){}})();
 try{key=localStorage.getItem(KEY_STORE);}catch(_){}
