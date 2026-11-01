@@ -246,6 +246,30 @@ header .sub{font-size:13px;color:var(--muted)}
 .upl input{display:none}
 .lockrow{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700}
 .lockrow input{width:auto;accent-color:var(--accent)}
+.sheetwrap{position:fixed;inset:0;z-index:60;background:rgba(15,18,20,.55);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:560px;max-height:calc(100dvh - 28px);overflow:auto;border-radius:20px 20px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.3);overscroll-behavior:contain;padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (min-width:640px){.sheetwrap{align-items:center}.sheet{border-radius:20px;max-height:calc(100dvh - 48px)}}
+.sheethead{position:sticky;top:0;z-index:2;display:flex;gap:12px;align-items:flex-start;justify-content:space-between;padding:16px 16px 12px;background:var(--hero);color:var(--on-hero)}
+.sheethead h3{margin:0;font:800 20px var(--f-display);letter-spacing:.01em}
+.sheethead p{margin:4px 0 0;font-size:13px;color:var(--on-hero-muted)}
+.xbtn{flex:none;width:38px;height:38px;border-radius:50%;border:0;background:var(--hero-chip);color:var(--on-hero);font:800 16px var(--f-ui);cursor:pointer}
+body.noscroll{overflow:hidden}
+.step{display:flex;flex-direction:column;gap:8px}
+.step>.sl{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;color:var(--ink)}
+.step>.sl b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--hero);color:var(--on-hero);font-size:12px}
+.rekpick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rekpick label{display:flex;flex-direction:column;gap:2px;border:2px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;background:var(--bg)}
+.rekpick label input{position:absolute;opacity:0;pointer-events:none}
+.rekpick label .rn{font:800 16px var(--f-ui)} .rekpick label small{font-size:12px;color:var(--muted)}
+.rekpick label.BRI .rn{color:var(--bri)} .rekpick label.BCA .rn{color:var(--bca)}
+.rekpick label.BRI:has(input:checked){border-color:var(--bri);background:var(--bri-soft);box-shadow:inset 0 0 0 1px var(--bri)}
+.rekpick label.BCA:has(input:checked){border-color:var(--bca);background:var(--bca-soft);box-shadow:inset 0 0 0 1px var(--bca)}
+.rekpick label.ar:has(input:checked){border-color:var(--ink);background:var(--soft);box-shadow:inset 0 0 0 1px var(--ink)}
+.rekpick label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.sheet .ed{border-top:0}
+.sheet .acts{position:sticky;bottom:0;background:var(--surface);padding:10px 0 4px;margin-top:4px;border-top:1px solid var(--line)}
+.tx.flash{animation:flash 2.4s ease-out 1}
+@keyframes flash{0%,35%{outline:3px solid var(--warn);outline-offset:-3px}100%{outline:3px solid transparent;outline-offset:-3px}}
 .radios{display:flex;gap:6px;flex-wrap:wrap}
 .radios label{flex:1;display:flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:10px;padding:9px 10px;font-weight:700;font-size:13.5px;cursor:pointer;background:var(--bg)}
 .radios label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
@@ -370,7 +394,6 @@ details.set .in{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
       <select id="fPos" aria-label="Kantong"></select>
     </div>
     <div class="reklegend" aria-hidden="true"><span><i style="background:var(--bri)"></i>BRI · Rumah, Bonsari, Kebun, Adib</span><span><i style="background:var(--bca)"></i>BCA · Pribadi</span><span style="display:inline"><b>↓ blok pekat</b> = uang masuk · <b>↑ warna muda</b> = uang keluar</span></div>
-    <div class="card list" id="addCard" hidden></div>
     <div class="card list" id="list"><div class="empty">Memuat…</div></div>
   </section>
 
@@ -412,6 +435,12 @@ details.set .in{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
   <div class="foot"><span id="who"></span><span id="sync"></span><span>Data tersimpan di Google Sheet milik Adib · cadangan otomatis tiap Senin</span></div>
 </div>
 <button class="fab" type="button" id="fab" hidden aria-label="Catat transaksi baru">+ Catat</button>
+<div class="sheetwrap" id="addWrap" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="addT">
+    <div class="sheethead"><div><h3 id="addT">Catat transaksi baru</h3><p>Isi dari atas ke bawah, lalu ketuk <b>Simpan transaksi</b>.</p></div><button type="button" class="xbtn" id="addX" aria-label="Tutup">✕</button></div>
+    <div id="addCard"></div>
+  </div>
+</div>
 <div class="snack" id="snack" hidden role="status"></div>
 <div class="viewer" id="viewer" hidden></div>
 
@@ -612,7 +641,7 @@ function renderList(){
   let lastD="";
   for(const t of rows){
     if(t.tanggal!==lastD){lastD=t.tanggal;box.appendChild(el("div","dayh",dLong(t.tanggal)));}
-    const b=el("button","tx rek-"+t.rek+(t.arah==="masuk"?" arah-in":" arah-out")+(t.id===openId?" open":""));b.type="button";b.setAttribute("aria-expanded",String(t.id===openId));
+    const b=el("button","tx rek-"+t.rek+(t.arah==="masuk"?" arah-in":" arah-out")+(t.id===openId?" open":""));b.type="button";b.dataset.id=t.id;b.setAttribute("aria-expanded",String(t.id===openId));
     const T=total(t),inn=t.arah==="masuk";
     let tags='<span class="tag t-'+t.rek+'">'+t.rek+'</span>';
     if(t.alokasi&&t.alokasi.length)t.alokasi.forEach(a=>tags+='<span class="tag t-'+a.pos+'"><i></i>'+POS[a.pos].lab+(t.alokasi.length>1?" "+rpk(a.jumlah):"")+'</span>');
@@ -731,7 +760,7 @@ function editor(t,isNew){
 
   // aksi
   const acts=el("div","acts");const save=el("button","btn",isNew?"Simpan transaksi":"Simpan");save.type="button";
-  const cancel=el("button","btn ghost","Tutup");cancel.type="button";cancel.onclick=()=>{openId=null;draft=null;if(isNew){$("addCard").hidden=true;$("fab").hidden=false;}renderList();};
+  const cancel=el("button","btn ghost","Tutup");cancel.type="button";cancel.onclick=()=>{openId=null;draft=null;if(isNew){closeAdd();return;}renderList();};
   acts.append(save,cancel);if(lockedForMe)save.hidden=true;
   if(!isNew&&t.sumber==="manual"&&(isAdib()||(t.oleh==="christo"&&!t.dikunci))){const del=el("button","btn danger small","Hapus");del.type="button";
     let armed=false;del.onclick=async()=>{if(!armed){armed=true;del.textContent="Ketuk lagi untuk hapus";setTimeout(()=>{armed=false;del.textContent="Hapus";},4000);return;}
@@ -755,7 +784,7 @@ function editor(t,isNew){
     if(canPos)data.alokasi=draft.alokasi.map(a=>({pos:a.pos,jumlah:a.jumlah}));
     if(isAdib()&&!isNew){data.dikunci=draft.dikunci;data.catatanAdib=draft.catatanAdib.trim();}
     try{
-      if(isNew){Object.assign(data,t.__base());await write({op:"add",col:"tx",data});$("addCard").hidden=true;$("fab").hidden=false;snack("Transaksi tersimpan");}
+      if(isNew){Object.assign(data,t.__base());const j=await write({op:"add",col:"tx",data});closeAdd();openId=null;draft=null;showNew(j&&j.id,data);return;}
       else{await write({op:"update",col:"tx",id:t.id,data});snack("Tersimpan ✓");}
       openId=null;draft=null;renderAll();
       if(!isNew&&view==="todo"){const next=filtered()[0];if(next&&isTodo(next)){openId=next.id;renderList();const e=document.getElementById("ed-"+next.id);e&&e.scrollIntoView({block:"center",behavior:"smooth"});}}
@@ -765,33 +794,48 @@ function editor(t,isNew){
 }
 
 // ---------------------------------------------------------------- transaksi baru (manual)
+function closeAdd(){$("addWrap").hidden=true;$("addCard").innerHTML="";document.body.classList.remove("noscroll");$("fab").hidden=false;draft=null;}
+function showNew(id,data){
+  setView("all");$("fRek").value="all";$("fPos").value="all";
+  const m=mKey(data.tanggal);renderFilters();$("fMonth").value=[...$("fMonth").options].some(o=>o.value===m)?m:"all";renderList();
+  const row=id&&document.querySelector('.tx[data-id="'+id+'"]');
+  if(row){row.scrollIntoView({block:"center",behavior:"smooth"});row.classList.add("flash");}
+  snack("Tersimpan ✓ Transaksinya ditandai di daftar");}
 function openAdd(){
-  const card=$("addCard");card.hidden=false;$("fab").hidden=true;card.innerHTML="";openId=null;renderList();
-  const head=el("div","ed");head.style.borderTop="0";
-  head.appendChild(el("h3",null,"Transaksi baru"));
-  head.appendChild(Object.assign(el("div","hint"),{textContent:"Untuk transaksi yang belum ada di mutasi bank, atau rincian belanja tunai. Saat mutasi bank masuk, catatan ini otomatis digabung dengan baris banknya (rekening, tanggal, dan jumlah yang sama)."}));
-  const base={rek:"BRI",arah:"keluar",tanggal:todayISO(),jumlah:0,uraian:""};
-  const rr=el("div","radios");["BRI","BCA"].forEach(r=>{const l=el("label");l.innerHTML='<input type="radio" name="nrek" value="'+r+'"'+(r==="BRI"?" checked":"")+'> '+r;rr.appendChild(l);});
-  head.appendChild(rr);
-  if(isAdib()){const ra=el("div","radios");[["keluar","Uang keluar"],["masuk","Uang masuk"]].forEach(([v,l2])=>{const l=el("label");l.innerHTML='<input type="radio" name="narah" value="'+v+'"'+(v==="keluar"?" checked":"")+'> '+l2;ra.appendChild(l);});head.appendChild(ra);}
+  const card=$("addCard");card.innerHTML="";openId=null;draft=null;renderList();
+  $("addWrap").hidden=false;$("fab").hidden=true;document.body.classList.add("noscroll");
+  const head=el("div","ed");
+  const step=(n,txt)=>{const w=el("div","step");const sl=el("div","sl");sl.innerHTML="<b>"+n+"</b>"+txt;w.appendChild(sl);head.appendChild(w);return w;};
+  let n=1;
+  const s1=step(n++,"Dari rekening mana?");
+  const rr=el("div","rekpick");[["BRI","Rumah · Bonsari · Kebun"],["BCA","Keperluan pribadi"]].forEach(([r,sub])=>{const l=el("label",r);l.innerHTML='<input type="radio" name="nrek" value="'+r+'"'+(r==="BRI"?" checked":"")+'><span class="rn">'+r+'</span><small>'+sub+'</small>';rr.appendChild(l);});
+  s1.appendChild(rr);
+  if(isAdib()){const s2=step(n++,"Uang keluar atau masuk?");const ra=el("div","rekpick");[["keluar","↑ Uang keluar","dibelanjakan / ditransfer"],["masuk","↓ Uang masuk","deposit dari Adib"]].forEach(([v,l2,sub])=>{const l=el("label","ar");l.innerHTML='<input type="radio" name="narah" value="'+v+'"'+(v==="keluar"?" checked":"")+'><span class="rn">'+l2+'</span><small>'+sub+'</small>';ra.appendChild(l);});s2.appendChild(ra);}
+  const s3=step(n++,"Kapan dan berapa?");
   const r2=el("div","row2");
-  const ld=el("label","f","Tanggal");const dd=el("input");dd.type="date";dd.value=base.tanggal;ld.appendChild(dd);
+  const ld=el("label","f","Tanggal");const dd=el("input");dd.type="date";dd.value=todayISO();ld.appendChild(dd);
   const la=el("label","f","Jumlah (Rp)");const aa=el("input","money");aa.inputMode="numeric";aa.placeholder="0";la.appendChild(aa);
-  r2.append(ld,la);head.appendChild(r2);
-  const lu=el("label","f","Nama transaksi");const uu=el("input");uu.maxLength=120;uu.placeholder="mis. Transfer ke Dea · Bayar QRIS warung";lu.appendChild(uu);head.appendChild(lu);
+  r2.append(ld,la);s3.appendChild(r2);
+  const s4=step(n++,"Nama transaksi");
+  const uu=el("input");uu.maxLength=120;uu.placeholder="mis. Transfer ke Dea · Bayar QRIS warung";uu.setAttribute("aria-label","Nama transaksi");s4.appendChild(uu);
+  const s5=step(n++,"Untuk apa?");const s5l=s5.querySelector(".sl");
   card.appendChild(head);
   const slot=el("div");card.appendChild(slot);
-  const t={id:null,rek:"BRI",arah:"keluar",tanggal:base.tanggal,jumlah:0,biaya:0,uraian:"",sumber:"manual",alokasi:[]};
+  const foot=el("div","hint");foot.style.padding="0 16px 16px";foot.textContent="Setelah disimpan, transaksi muncul di daftar Transaksi (tab Semua) dan ditandai. Saat mutasi bank diimpor, catatan ini otomatis digabung dengan baris banknya (rekening, tanggal, dan jumlah yang sama).";card.appendChild(foot);
+  const t={id:null,rek:"BRI",arah:"keluar",tanggal:dd.value,jumlah:0,biaya:0,uraian:"",sumber:"manual",alokasi:[]};
   t.__base=()=>({rek:t.rek,arah:t.arah,tanggal:dd.value,jumlah:digits(aa.value),uraian:uu.value.trim()||"Transaksi manual"});
   const redraw=()=>{t.rek=(card.querySelector('input[name="nrek"]:checked')||{}).value||"BRI";t.arah=(card.querySelector('input[name="narah"]:checked')||{}).value||"keluar";t.jumlah=digits(aa.value);t.tanggal=dd.value;
+    s5l.innerHTML="<b>"+(n-1)+"</b>"+(t.arah==="masuk"?"Dari mana uang ini?":"Untuk apa uang ini?");
     draft={alokasi:draft&&draft.alokasi&&draft.alokasi.length===1?[{pos:draft.alokasi[0].pos,jumlah:t.jumlah}]:(draft?draft.alokasi:[]),split:draft?draft.split:false,ket:draft?draft.ket:"",nota:draft?draft.nota:[],dikunci:false,catatanAdib:""};
-    slot.innerHTML="";const ed=editor(t,true);ed.style.borderTop="0";slot.appendChild(ed);};
-  draft=null;redraw();
-  aa.addEventListener("input",()=>{const n=digits(aa.value);aa.value=n?fmt.format(n):"";redraw();});
-  card.querySelectorAll('input[type=radio]').forEach(r=>r.addEventListener("change",redraw));
+    slot.innerHTML="";const ed=editor(t,true);ed.style.paddingTop="0";slot.appendChild(ed);};
+  redraw();
+  aa.addEventListener("input",()=>{const v=digits(aa.value);aa.value=v?fmt.format(v):"";redraw();});
+  card.querySelectorAll('input[type=radio]').forEach(r=>r.addEventListener("change",()=>{if(r.name==="nrek"&&draft)draft.alokasi=[];redraw();}));
   dd.addEventListener("change",redraw);
-  card.scrollIntoView({behavior:"smooth",block:"start"});
+  $("addWrap").querySelector(".sheet").scrollTop=0;
 }
+$("addX").onclick=closeAdd;
+$("addWrap").addEventListener("click",e=>{if(e.target.id==="addWrap")closeAdd();});
 
 // ================================================================ rekap
 function renderRecap(){
@@ -842,7 +886,7 @@ function take(j){if(j&&j.data){store=j.data;store.tx=store.tx||{};store.config=s
 let wq=Promise.resolve();
 async function write(body){pending++;const run=wq.then(()=>call(body));wq=run.catch(()=>{});
   try{const j=await run;take(j);return j;}finally{pending--;}}
-async function refresh(){if(pending||!key||openId||!$("addCard").hidden)return;try{take(await call({op:"load"}));renderAll();}catch(e){if(e.code==="kunci")logout();}}
+async function refresh(){if(pending||!key||openId||!$("addWrap").hidden)return;try{take(await call({op:"load"}));renderAll();}catch(e){if(e.code==="kunci")logout();}}
 const thumbs={};
 async function fetchNota(id){if(thumbs[id])return thumbs[id];const j=await call({op:"nota",id});thumbs[id]="data:"+j.contentType+";base64,"+j.base64;return thumbs[id];}
 async function loadThumb(id,node){try{const u=await fetchNota(id);if(u.startsWith("data:image")){const img=el("img");img.alt="Nota";img.src=u;node.firstChild&&node.firstChild.nodeType===3&&node.removeChild(node.firstChild);node.prepend(img);}else{node.firstChild.textContent="PDF";}}catch(_){}}
@@ -891,11 +935,11 @@ $("impBtn").onclick=async()=>{let d;try{d=JSON.parse($("impTxt").value);}catch(_
   catch(e){$("setMsg").textContent=errText(e);$("setMsg").className="msg err";}};
 $("expBtn").onclick=async()=>{try{const j=await call({op:"export"});const blob=new Blob([JSON.stringify({dibuat:new Date().toISOString(),data:j.data},null,1)],{type:"application/json"});
   const a=el("a");a.href=URL.createObjectURL(blob);a.download="Kas Christo "+todayISO()+".json";document.body.appendChild(a);a.click();a.remove();}catch(e){$("setMsg").textContent=errText(e);$("setMsg").className="msg err";}};
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("viewer").hidden){$("viewer").hidden=true;$("viewer").innerHTML="";}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("viewer").hidden){$("viewer").hidden=true;$("viewer").innerHTML="";}else if(e.key==="Escape"&&!$("addWrap").hidden)closeAdd();});
 
 // ================================================================ boot
 // versi halaman: kalau HP masih memegang versi lama (cache), muat ulang sekali ke versi terbaru
-const PAGE_VERSION="2026-11-01e";
+const PAGE_VERSION="2026-11-01f";
 (async()=>{try{const r=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/PAGE_VERSION="([^"]+)"/);
   if(m&&m[1]!==PAGE_VERSION){let done=null;try{done=sessionStorage.getItem("kcReload");}catch(_){}if(done!==m[1]){try{sessionStorage.setItem("kcReload",m[1]);}catch(_){}location.reload();}}}catch(_){}})();
 try{key=localStorage.getItem(KEY_STORE);}catch(_){}
