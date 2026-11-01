@@ -18,7 +18,7 @@
   --accent:#2F6B4E; --accent-ink:#245A40; --accent-soft:#E2EFE6;
   --bonsari:#A8642A; --bonsari-soft:#F6E8DA; --kebun:#3E8657; --kebun-soft:#E1F0E5;
   --rumah:#2E7590; --rumah-soft:#DDEEF4; --pribadi:#8A5BA0; --pribadi-soft:#F0E6F5;
-  --on-rek:#FFFFFF; --bri:#1F5FAD; --bri-soft:#E4EEFA; --bca:#8A4FA3; --bca-soft:#F3E9F7; --adib:#4F5F86; --adib-soft:#E6EAF3; --pindah:#6B7280; --pindah-soft:#ECEDEF; --bank:#8A8F87; --bank-soft:#EEEFEC; --lain:#56657A; --lain-soft:#E6EAF0;
+  --on-rek:#FFFFFF; --bri:#1F5FAD; --bri-soft:#E4EEFA; --bca:#8A4FA3; --bca-soft:#F3E9F7; --bri-blk:#1F5FAD; --bca-blk:#8A4FA3; --adib:#4F5F86; --adib-soft:#E6EAF3; --pindah:#6B7280; --pindah-soft:#ECEDEF; --bank:#8A8F87; --bank-soft:#EEEFEC; --lain:#56657A; --lain-soft:#E6EAF0;
   --ok:#2E7A55; --ok-soft:#E1F1E8; --warn:#A5620E; --warn-soft:#FBEEDB; --bad:#B03A2E; --bad-soft:#F9E4E1;
   --f-ui:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-display:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
@@ -33,7 +33,7 @@
   --accent:#7CC59C; --accent-ink:#9AD6B3; --accent-soft:#1E3328;
   --bonsari:#E0A16A; --bonsari-soft:#3A2A1C; --kebun:#7CC59C; --kebun-soft:#1E3328;
   --rumah:#6CB8D4; --rumah-soft:#173039; --pribadi:#C59BDB; --pribadi-soft:#33243D;
-  --on-rek:#0F1612; --bri:#7FB0EC; --bri-soft:#16263A; --bca:#CDA2E0; --bca-soft:#2C2035; --adib:#A3B2D6; --adib-soft:#252B3A; --pindah:#AAB0B9; --pindah-soft:#262B31; --bank:#A9AEA6; --bank-soft:#262A25; --lain:#A6B4C8; --lain-soft:#242B35;
+  --on-rek:#0F1612; --bri:#7FB0EC; --bri-soft:#16263A; --bca:#CDA2E0; --bca-soft:#2C2035; --bri-blk:#2A64B4; --bca-blk:#7A4596; --adib:#A3B2D6; --adib-soft:#252B3A; --pindah:#AAB0B9; --pindah-soft:#262B31; --bank:#A9AEA6; --bank-soft:#262A25; --lain:#A6B4C8; --lain-soft:#242B35;
   --ok:#7CC59C; --ok-soft:#183024; --warn:#E8B45A; --warn-soft:#3A2D17; --bad:#F0918A; --bad-soft:#3B1E1B;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -14px rgba(0,0,0,.6)}}
 :root[data-theme="dark"]{
@@ -43,7 +43,7 @@
   --accent:#7CC59C; --accent-ink:#9AD6B3; --accent-soft:#1E3328;
   --bonsari:#E0A16A; --bonsari-soft:#3A2A1C; --kebun:#7CC59C; --kebun-soft:#1E3328;
   --rumah:#6CB8D4; --rumah-soft:#173039; --pribadi:#C59BDB; --pribadi-soft:#33243D;
-  --on-rek:#0F1612; --bri:#7FB0EC; --bri-soft:#16263A; --bca:#CDA2E0; --bca-soft:#2C2035; --adib:#A3B2D6; --adib-soft:#252B3A; --pindah:#AAB0B9; --pindah-soft:#262B31; --bank:#A9AEA6; --bank-soft:#262A25; --lain:#A6B4C8; --lain-soft:#242B35;
+  --on-rek:#0F1612; --bri:#7FB0EC; --bri-soft:#16263A; --bca:#CDA2E0; --bca-soft:#2C2035; --bri-blk:#2A64B4; --bca-blk:#7A4596; --adib:#A3B2D6; --adib-soft:#252B3A; --pindah:#AAB0B9; --pindah-soft:#262B31; --bank:#A9AEA6; --bank-soft:#262A25; --lain:#A6B4C8; --lain-soft:#242B35;
   --ok:#7CC59C; --ok-soft:#183024; --warn:#E8B45A; --warn-soft:#3A2D17; --bad:#F0918A; --bad-soft:#3B1E1B;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -14px rgba(0,0,0,.6)}
 *{box-sizing:border-box}
@@ -175,19 +175,32 @@ header .sub{font-size:13px;color:var(--muted)}
 .list{margin-top:12px}
 .dayh{padding:10px 16px 6px;font:700 12px var(--f-ui);color:var(--muted);letter-spacing:.04em;text-transform:uppercase;background:var(--soft);border-top:1px solid var(--line)}
 .dayh:first-child{border-top:0;border-radius:var(--r) var(--r) 0 0}
-.tx{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 12px;padding:12px 16px;border-top:1px solid var(--line);cursor:pointer;background:transparent;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left}
+.tx{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:3px 12px;padding:12px 16px;border-top:1px solid var(--line);cursor:pointer;background:transparent;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left}
 .dayh+.tx{border-top:0}
 .tx:hover{background:color-mix(in srgb,var(--soft) 55%,transparent)}
 .tx .w{font-weight:700;font-size:14.5px;overflow-wrap:anywhere}
 .tx .a{text-align:right;font:600 14.5px var(--f-num);white-space:nowrap}
 .tx .a.in{color:var(--ok)}
 .tx .a small{display:block;font-size:11px;color:var(--muted);font-weight:500}
-.tx .m{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:12.5px;color:var(--muted)}
-.tx .k{grid-column:1/-1;font-size:13px;color:var(--ink);background:var(--soft);border-radius:8px;padding:6px 9px}
+.tx .m{grid-column:2/-1;display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:12.5px;color:var(--muted)}
+.tx .k{grid-column:2/-1;font-size:13px;color:var(--ink);background:var(--soft);border-radius:8px;padding:6px 9px}
 .tx.open{background:var(--soft)}
+.tx .ic{grid-row:1/span 2;align-self:start;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font:800 14px/1 var(--f-ui);background:var(--surface);margin-top:1px}
+.tx.rek-BRI .ic{color:var(--bri)} .tx.rek-BCA .ic{color:var(--bca)}
+.tx .k.ka{background:var(--warn-soft)}
 .tx.rek-BRI{box-shadow:inset 5px 0 0 var(--bri);background:color-mix(in srgb,var(--bri-soft) 55%,transparent)}
 .tx.rek-BCA{box-shadow:inset 5px 0 0 var(--bca);background:color-mix(in srgb,var(--bca-soft) 55%,transparent)}
 .tx.rek-BRI.open{background:var(--bri-soft)} .tx.rek-BCA.open{background:var(--bca-soft)}
+.tx.arah-in{border-top-color:transparent}
+.tx.arah-in.rek-BRI{background:var(--bri-blk);box-shadow:none} .tx.arah-in.rek-BCA{background:var(--bca-blk);box-shadow:none}
+.tx.arah-in:hover{filter:brightness(1.08)} .tx.arah-in.open{box-shadow:inset 0 0 0 3px rgba(255,255,255,.4)}
+.tx.arah-in .w,.tx.arah-in .a,.tx.arah-in .a.in{color:#fff}
+.tx.arah-in .a small{color:rgba(255,255,255,.78)} .tx.arah-in .m{color:rgba(255,255,255,.85)}
+.tx.arah-in .ic{background:rgba(255,255,255,.2);color:#fff}
+.tx.arah-in .tag{background:rgba(255,255,255,.18);color:#fff}
+.tx.arah-in .tag.t-BRI{background:#fff;color:var(--bri-blk)} .tx.arah-in .tag.t-BCA{background:#fff;color:var(--bca-blk)}
+.tx.arah-in .tag.t-none{background:#FBEEDB;color:#7A4708} .tx.arah-in .tag.t-swap{background:#F9E4E1;color:#9A2F24} .tx.arah-in .tag.t-lock{background:rgba(255,255,255,.94);color:#245A40}
+.tx.arah-in .k{background:rgba(255,255,255,.16);color:#fff} .tx.arah-in .k.ka{background:#FBEEDB;color:#3D2A0A}
 .ed.rek-BRI{box-shadow:inset 5px 0 0 var(--bri)} .ed.rek-BCA{box-shadow:inset 5px 0 0 var(--bca)}
 .tag.t-BRI{background:var(--bri);color:var(--on-rek)} .tag.t-BCA{background:var(--bca);color:var(--on-rek)}
 .acct.rek-BRI{border-top:5px solid var(--bri)} .acct.rek-BCA{border-top:5px solid var(--bca)}
@@ -356,7 +369,7 @@ details.set .in{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
       <select id="fRek" aria-label="Rekening"><option value="all">BRI + BCA</option><option value="BRI">BRI</option><option value="BCA">BCA</option></select>
       <select id="fPos" aria-label="Kantong"></select>
     </div>
-    <div class="reklegend" aria-hidden="true"><span><i style="background:var(--bri)"></i>BRI · Rumah, Bonsari, Kebun, Adib</span><span><i style="background:var(--bca)"></i>BCA · Pribadi</span></div>
+    <div class="reklegend" aria-hidden="true"><span><i style="background:var(--bri)"></i>BRI · Rumah, Bonsari, Kebun, Adib</span><span><i style="background:var(--bca)"></i>BCA · Pribadi</span><span style="display:inline"><b>↓ blok pekat</b> = uang masuk · <b>↑ warna muda</b> = uang keluar</span></div>
     <div class="card list" id="addCard" hidden></div>
     <div class="card list" id="list"><div class="empty">Memuat…</div></div>
   </section>
@@ -599,7 +612,7 @@ function renderList(){
   let lastD="";
   for(const t of rows){
     if(t.tanggal!==lastD){lastD=t.tanggal;box.appendChild(el("div","dayh",dLong(t.tanggal)));}
-    const b=el("button","tx rek-"+t.rek+(t.id===openId?" open":""));b.type="button";b.setAttribute("aria-expanded",String(t.id===openId));
+    const b=el("button","tx rek-"+t.rek+(t.arah==="masuk"?" arah-in":" arah-out")+(t.id===openId?" open":""));b.type="button";b.setAttribute("aria-expanded",String(t.id===openId));
     const T=total(t),inn=t.arah==="masuk";
     let tags='<span class="tag t-'+t.rek+'">'+t.rek+'</span>';
     if(t.alokasi&&t.alokasi.length)t.alokasi.forEach(a=>tags+='<span class="tag t-'+a.pos+'"><i></i>'+POS[a.pos].lab+(t.alokasi.length>1?" "+rpk(a.jumlah):"")+'</span>');
@@ -610,8 +623,8 @@ function renderList(){
     if(t.dikunci)tags+='<span class="tag t-lock">✓ Dicek Adib</span>';
     if(t.sumber==="manual")tags+='<span class="tag">Manual</span>';
     if((t.nota||[]).length)tags+='<span class="tag">📎 '+t.nota.length+'</span>';
-    b.innerHTML='<span class="w">'+esc(titleOf(t))+'</span><span class="a num'+(inn?" in":"")+'">'+(inn?"+":"−")+fmt.format(T)+(t.biaya?'<small>termasuk biaya '+fmt.format(t.biaya)+'</small>':"")+'</span>'+
-      '<span class="m">'+(t.jam?'<span>'+esc(t.jam)+'</span>':"")+tags+'</span>'+((t.ket||"").trim()?'<span class="k">'+esc(t.ket)+'</span>':"")+(t.catatanAdib&&!(t.ket||"").trim()?'<span class="k" style="background:var(--warn-soft)">Adib: '+esc(t.catatanAdib)+'</span>':"");
+    b.innerHTML='<span class="ic" aria-hidden="true">'+(inn?"↓":"↑")+'</span><span class="w">'+esc(titleOf(t))+'</span><span class="a num'+(inn?" in":"")+'">'+(inn?"+":"−")+fmt.format(T)+(t.biaya?'<small>termasuk biaya '+fmt.format(t.biaya)+'</small>':"")+'</span>'+
+      '<span class="m">'+(t.jam?'<span>'+esc(t.jam)+'</span>':"")+tags+'</span>'+((t.ket||"").trim()?'<span class="k">'+esc(t.ket)+'</span>':"")+(t.catatanAdib&&!(t.ket||"").trim()?'<span class="k ka">Adib: '+esc(t.catatanAdib)+'</span>':"");
     b.onclick=()=>{if(openId===t.id){openId=null;draft=null;}else{openId=t.id;draft=null;}renderList();if(openId){const e=document.getElementById("ed-"+t.id);e&&e.scrollIntoView({block:"nearest",behavior:"smooth"});}};
     box.appendChild(b);
     if(t.id===openId)box.appendChild(editor(t));
@@ -882,7 +895,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("viewer").hidden
 
 // ================================================================ boot
 // versi halaman: kalau HP masih memegang versi lama (cache), muat ulang sekali ke versi terbaru
-const PAGE_VERSION="2026-11-01d";
+const PAGE_VERSION="2026-11-01e";
 (async()=>{try{const r=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/PAGE_VERSION="([^"]+)"/);
   if(m&&m[1]!==PAGE_VERSION){let done=null;try{done=sessionStorage.getItem("kcReload");}catch(_){}if(done!==m[1]){try{sessionStorage.setItem("kcReload",m[1]);}catch(_){}location.reload();}}}catch(_){}})();
 try{key=localStorage.getItem(KEY_STORE);}catch(_){}
