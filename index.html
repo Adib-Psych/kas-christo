@@ -494,7 +494,8 @@ const ATURAN_MULAI="2026-09-15"; // BRI dibuka 15 Sep 2026; sebelum itu belum ad
 const noteOptional=t=>t.alokasi&&t.alokasi.length&&t.alokasi.every(a=>a.pos==="bank"||(a.pos==="pribadi"&&t.rek==="BCA"));
 const needsNote=t=>t.arah==="keluar"&&t.alokasi&&t.alokasi.length&&!(t.ket||"").trim()&&!noteOptional(t);
 // "Perlu diisi" = belum dipilah atau belum ada catatan. Masuk hanya untuk Adib.
-const isTodo=t=>{if(t.arah==="masuk")return !t.dikunci&&!(t.ket||"").trim();return !(t.alokasi&&t.alokasi.length)||needsNote(t);};
+const askedByAdib=t=>!t.dikunci&&!!(t.catatanAdib||"").trim()&&!(t.ket||"").trim();
+const isTodo=t=>{if(askedByAdib(t))return true;if(t.arah==="masuk")return !t.dikunci&&!(t.ket||"").trim();return !(t.alokasi&&t.alokasi.length)||needsNote(t);};
 function swapPart(t){ // bagian yang tertukar rekening (keluar saja)
   if(t.arah!=="keluar"||!t.alokasi||t.tanggal<ATURAN_MULAI)return 0;
   return t.alokasi.reduce((s,a)=>{const r=POS[a.pos]&&POS[a.pos].rek;return s+((r&&r!=="*"&&r!==t.rek)?a.jumlah:0);},0);
@@ -648,7 +649,7 @@ function renderList(){
     else if(!inn)tags+='<span class="tag t-none">Belum dipilah</span>';
     else if(!(t.ket||"").trim())tags+='<span class="tag t-none">'+(t.dikunci?"Dari Adib":"Asal belum dicatat")+'</span>';
     if(swapPart(t))tags+='<span class="tag t-swap">Tertukar</span>';
-    if(needsNote(t))tags+='<span class="tag t-none">Belum ada catatan</span>';
+    if(needsNote(t))tags+='<span class="tag t-none">Belum ada catatan</span>';else if(askedByAdib(t))tags+='<span class="tag t-none">Ditanya Adib</span>';
     if(t.dikunci)tags+='<span class="tag t-lock">✓ Dicek Adib</span>';
     if(t.sumber==="manual")tags+='<span class="tag">Manual</span>';
     if((t.nota||[]).length)tags+='<span class="tag">📎 '+t.nota.length+'</span>';
@@ -939,7 +940,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("viewer").hidden
 
 // ================================================================ boot
 // versi halaman: kalau HP masih memegang versi lama (cache), muat ulang sekali ke versi terbaru
-const PAGE_VERSION="2026-11-01f";
+const PAGE_VERSION="2026-11-01g";
 (async()=>{try{const r=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/PAGE_VERSION="([^"]+)"/);
   if(m&&m[1]!==PAGE_VERSION){let done=null;try{done=sessionStorage.getItem("kcReload");}catch(_){}if(done!==m[1]){try{sessionStorage.setItem("kcReload",m[1]);}catch(_){}location.reload();}}}catch(_){}})();
 try{key=localStorage.getItem(KEY_STORE);}catch(_){}
