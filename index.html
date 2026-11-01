@@ -170,8 +170,9 @@ header .sub{font-size:13px;color:var(--muted)}
 .seg{display:flex;gap:4px;background:var(--soft);border-radius:12px;padding:4px}
 .seg button{flex:1;border:0;background:transparent;color:var(--muted);font:700 13.5px var(--f-ui);padding:9px 6px;border-radius:9px;cursor:pointer;white-space:nowrap}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--accent-ink);box-shadow:0 1px 3px rgba(32,58,46,.15)}
-.filters{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.filters select{font-size:13.5px;padding:8px 9px;width:auto;flex:1 1 auto}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.filters select{font-size:13.5px;padding:8px 9px;width:100%;min-width:0}
+@media (min-width:640px){.filters{grid-template-columns:repeat(4,1fr)}}
 .list{margin-top:12px}
 .dayh{padding:10px 16px 6px;font:700 12px var(--f-ui);color:var(--muted);letter-spacing:.04em;text-transform:uppercase;background:var(--soft);border-top:1px solid var(--line)}
 .dayh:first-child{border-top:0;border-radius:var(--r) var(--r) 0 0}
@@ -391,6 +392,7 @@ details.set .in{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
     <div class="filters">
       <select id="fMonth" aria-label="Bulan"></select>
       <select id="fRek" aria-label="Rekening"><option value="all">BRI + BCA</option><option value="BRI">BRI</option><option value="BCA">BCA</option></select>
+      <select id="fArah" aria-label="Arah uang"><option value="all">Masuk + keluar</option><option value="masuk">↓ Uang masuk</option><option value="keluar">↑ Uang keluar</option></select>
       <select id="fPos" aria-label="Kantong"></select>
     </div>
     <div class="reklegend" aria-hidden="true"><span><i style="background:var(--bri)"></i>BRI · Rumah, Bonsari, Kebun, Adib</span><span><i style="background:var(--bca)"></i>BCA · Pribadi</span><span style="display:inline"><b>↓ blok pekat</b> = uang masuk · <b>↑ warna muda</b> = uang keluar</span></div>
@@ -628,12 +630,13 @@ function renderFilters(){
 }
 function setView(v){view=v;document.querySelectorAll(".seg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===v)));renderList();}
 function filtered(){
-  const m=$("fMonth").value,r=$("fRek").value,p=$("fPos").value;
+  const m=$("fMonth").value,r=$("fRek").value,p=$("fPos").value,ar=$("fArah").value;
   return txs().filter(t=>{
     if(view==="todo"&&!isTodo(t)&&t.id!==openId)return false;
     if(view==="swap"&&!swapPart(t))return false;
     if(m!=="all"&&mKey(t.tanggal)!==m)return false;
     if(r!=="all"&&t.rek!==r)return false;
+    if(ar!=="all"&&t.arah!==ar)return false;
     if(p==="none"&&t.alokasi&&t.alokasi.length)return false;
     if(p!=="all"&&p!=="none"&&!(t.alokasi||[]).some(a=>a.pos===p))return false;
     return true;
@@ -800,7 +803,7 @@ function editor(t,isNew){
 // ---------------------------------------------------------------- transaksi baru (manual)
 function closeAdd(){$("addWrap").hidden=true;$("addCard").innerHTML="";document.body.classList.remove("noscroll");$("fab").hidden=false;draft=null;}
 function showNew(id,data){
-  setView("all");$("fRek").value="all";$("fPos").value="all";
+  setView("all");$("fRek").value="all";$("fArah").value="all";$("fPos").value="all";
   const m=mKey(data.tanggal);renderFilters();$("fMonth").value=[...$("fMonth").options].some(o=>o.value===m)?m:"all";renderList();
   const row=id&&document.querySelector('.tx[data-id="'+id+'"]');
   if(row){row.scrollIntoView({block:"center",behavior:"smooth"});row.classList.add("flash");}
@@ -925,7 +928,7 @@ async function login(){
 
 // ================================================================ events
 document.querySelectorAll(".seg button").forEach(b=>b.addEventListener("click",()=>setView(b.dataset.v)));
-["fMonth","fRek","fPos"].forEach(id=>$(id).addEventListener("change",renderList));
+["fMonth","fRek","fArah","fPos"].forEach(id=>$(id).addEventListener("change",renderList));
 $("repMonth").addEventListener("change",renderReport);
 $("goPilah").onclick=()=>{setView("todo");$("listSec").scrollIntoView({behavior:"smooth"});};
 $("addBtn").onclick=openAdd;$("addTop").onclick=openAdd;$("fab").onclick=openAdd;
@@ -943,7 +946,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("viewer").hidden
 
 // ================================================================ boot
 // versi halaman: kalau HP masih memegang versi lama (cache), muat ulang sekali ke versi terbaru
-const PAGE_VERSION="2026-11-01h";
+const PAGE_VERSION="2026-11-01i";
 (async()=>{try{const r=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/PAGE_VERSION="([^"]+)"/);
   if(m&&m[1]!==PAGE_VERSION){let done=null;try{done=sessionStorage.getItem("kcReload");}catch(_){}if(done!==m[1]){try{sessionStorage.setItem("kcReload",m[1]);}catch(_){}location.reload();}}}catch(_){}})();
 try{key=localStorage.getItem(KEY_STORE);}catch(_){}
