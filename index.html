@@ -387,8 +387,8 @@ details.set .in{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
   </nav>
 
   <!-- KANTONG PER BANK -->
-  <section aria-labelledby="ruleT" data-tab="BRI BCA">
-    <div class="sec-head"><h2 id="ruleT">Saldo rekening</h2><span class="hint">Menurut mutasi bank</span></div>
+  <section aria-labelledby="ruleT" data-tab="BRI BCA CC">
+    <div class="sec-head"><h2 id="ruleT">Saldo rekening</h2><span class="hint" id="ruleHint">Menurut mutasi bank</span></div>
     <div class="rules one">
       <div class="acct rek-BRI" data-tab="BRI">
         <div class="bank"><b>BRI</b><span class="tag t-rek">Ngantang</span></div>
@@ -404,18 +404,20 @@ details.set .in{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
         <div class="io" id="ioBCA"></div>
         <div class="use">Untuk keperluan <b>pribadi Christo</b> dari uang bulanan.</div>
       </div>
+      <div class="acct rek-CC" data-tab="CC">
+        <div class="bank"><b>CC BNI</b><span class="tag t-rek">VISA ··8946</span></div>
+        <div class="bal" id="balCC">–</div>
+        <div class="rec hint" id="recCC"></div>
+        <div class="io" id="ioCC"></div>
+        <div class="use">Kartu kredit tambahan Christo; <b>tagihan dibayar Adib</b>. Untuk belanja <b>Rumah NGT</b>, <b>Bonsari</b>, <b>Kebun</b>, atau <b>Pribadi</b>.</div>
+      </div>
     </div>
   </section>
 
   <!-- LAPORAN BRI -->
-  <!-- CC BNI -->
-  <section aria-labelledby="ccT" data-tab="CC">
-    <div class="sec-head"><h2 id="ccT">Tagihan CC BNI Christo</h2><select id="ccMonth" aria-label="Bulan"></select></div>
-    <div class="card pad rep ccsum" id="ccBox"></div>
-  </section>
 
-  <section aria-labelledby="repT" data-tab="BRI">
-    <div class="sec-head"><h2 id="repT">Laporan pemakaian BRI</h2><select id="repMonth" aria-label="Periode laporan"></select></div>
+  <section aria-labelledby="repT" data-tab="ring BRI BCA CC">
+    <div class="sec-head"><h2 id="repT">Laporan pemakaian</h2><select id="repMonth" aria-label="Periode laporan"></select></div>
     <div class="card pad rep" id="rep"></div>
   </section>
 
@@ -440,8 +442,8 @@ details.set .in{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
   </section>
 
   <!-- REKAP -->
-  <section aria-labelledby="recapT" data-tab="BRI">
-    <div class="sec-head"><h2 id="recapT">Rekap per bulan</h2><span class="hint">Pemakaian BRI per bulan</span></div>
+  <section aria-labelledby="recapT" data-tab="ring BRI BCA CC">
+    <div class="sec-head"><h2 id="recapT">Rekap per bulan</h2><span class="hint" id="recapHint">Pemakaian per bulan</span></div>
     <div class="card">
       <div class="mbars" id="mbars"></div>
       <div class="legend" id="mLegend"></div>
@@ -535,6 +537,8 @@ const canEdit=t=>isAdib()||(!t.dikunci);
 const ATURAN_MULAI="2026-09-15"; // BRI dibuka 15 Sep 2026; sebelum itu belum ada aturan dua rekening
 const noteOptional=t=>t.alokasi&&t.alokasi.length&&t.alokasi.every(a=>a.pos==="bank"||(a.pos==="pribadi"&&t.rek==="BCA")||(t.rek==="CC"&&(a.pos==="rumah"||a.pos==="pribadi")));
 const rekLab=r=>r==="CC"?"CC BNI":r;
+const scopeLab=()=>tab==="ring"?"semua rekening":rekLab(tab);
+const inScope=t=>(tab==="ring"||t.rek===tab)&&t.tanggal>=ATURAN_MULAI;
 let tab=(()=>{try{return localStorage.getItem("kcTab")||"ring";}catch(_){return "ring";}})();
 const needsNote=t=>t.arah==="keluar"&&t.alokasi&&t.alokasi.length&&!(t.ket||"").trim()&&!noteOptional(t);
 // "Perlu diisi" = belum dipilah atau belum ada catatan. Masuk hanya untuk Adib.
@@ -595,11 +599,12 @@ function calc(){
 function renderAll(){if(!store)return;renderHero();const c=calc();renderAcct(c);renderReport();renderCC();renderSwap(c);renderTabs(c);renderFilters();renderList();renderRecap();}
 // ================================================================ tab rekening
 function applyTab(){
+  $("ruleT").textContent=tab==="CC"?"Tagihan kartu":"Saldo rekening";$("ruleHint").textContent=tab==="CC"?"Menurut email notifikasi BNI":"Menurut mutasi bank";
   document.querySelectorAll("[data-tab]").forEach(e=>{e.hidden=!e.dataset.tab.split(" ").includes(tab);});
   document.querySelectorAll(".rtabs button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.t===tab)));
   document.querySelectorAll(".mini").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.go===tab)));
 }
-function setTab(t){tab=t;try{localStorage.setItem("kcTab",t);}catch(_){}openId=null;draft=null;applyTab();renderFilters();renderList();}
+function setTab(t){tab=t;try{localStorage.setItem("kcTab",t);}catch(_){}openId=null;draft=null;$("repMonth").value="all";applyTab();renderReport();renderRecap();renderFilters();renderList();}
 const ccMonths=()=>[...new Set(txs().filter(t=>t.rek==="CC").map(t=>mKey(t.tanggal)))].sort().reverse();
 function renderTabs(c){
   const n=r=>txs().filter(t=>(r==="ring"||t.rek===r)&&isTodo(t)).length;
@@ -612,25 +617,15 @@ function renderTabs(c){
 }
 function shopOf(u){u=(u||"").toUpperCase();if(/ALFAMART|ALIMART/.test(u))return "Alfamart/Alimart";if(/^IDM|INDOMARET/.test(u))return "Indomaret";if(/SPBU/.test(u))return "SPBU (BBM)";return (u||"Lainnya").replace(/\s+/g," ").trim();}
 function renderCC(){
-  const sel=$("ccMonth"),cur=sel.value;const ms=ccMonths();
-  sel.innerHTML=ms.map(m=>'<option value="'+m+'">'+mLabel(m)+'</option>').join("")+'<option value="all">Semua bulan</option>';
-  sel.value=[...sel.options].some(o=>o.value===cur)?cur:(ms[0]||"all");
-  const box=$("ccBox");
-  const rows=txs().filter(t=>t.rek==="CC"&&t.arah==="keluar"&&(sel.value==="all"||mKey(t.tanggal)===sel.value));
-  if(!rows.length){box.innerHTML='<div class="hint">Belum ada transaksi CC BNI.</div>';return;}
-  const tot=rows.reduce((s,t)=>s+total(t),0);const sum={};let un=0;
-  rows.forEach(t=>{if(!t.alokasi||!t.alokasi.length){un+=total(t);return;}t.alokasi.forEach(a=>sum[a.pos]=(sum[a.pos]||0)+a.jumlah);});
-  const keys=["rumah","bonsari","kebun","adib","pribadi","lain"].filter(k=>sum[k]);
-  const max=Math.max(1,...keys.map(k=>sum[k]),un);
-  const row=(k,lab,v)=>'<div class="rrow" style="--c:'+(k?COLOR(k):"var(--warn)")+'"><span class="nm"><i></i>'+lab+'</span><span class="num">'+rp(v)+'</span><span class="bar"><span style="width:'+Math.max(v?2:0,v/max*100)+'%"></span></span></div>';
-  const shops={};rows.forEach(t=>{const k=shopOf(t.uraian);shops[k]=shops[k]||{n:0,v:0};shops[k].n++;shops[k].v+=total(t);});
-  const top=Object.entries(shops).sort((a,b)=>b[1].v-a[1].v);
-  let h='<div class="tot"><span class="hint">VISA ··8946 · dibayar Adib · '+(sel.value==="all"?"semua bulan":mLabel(sel.value))+'</span><b class="num">'+rp(tot)+'</b></div>';
-  h+='<div class="hint">'+rows.length+' transaksi</div>';
-  h+=keys.map(k=>row(k,POS[k].lab,sum[k])).join("")+(un?row(null,"Belum dipilah",un):"");
-  h+='<div class="hint" style="margin-top:10px"><b>Tempat belanja</b></div><div class="shops">'+top.slice(0,6).map(([k,o])=>'<span>'+esc(k)+' <b class="num">Rp '+rpk(o.v)+'</b> ('+o.n+'×)</span>').join("")+'</div>';
-  h+='<div class="ccnote">Sumber: email notifikasi transaksi BNI. Dihitung per bulan kalender; dicocokkan dengan e-billing saat tagihan terbit.</div>';
-  box.innerHTML=h;
+  const rows=txs().filter(t=>t.rek==="CC"&&t.arah==="keluar");const ms=ccMonths();const m=ms[0];
+  if(!rows.length){$("balCC").textContent="Belum ada data";$("recCC").textContent="";$("ioCC").innerHTML="";return;}
+  const cur=rows.filter(t=>mKey(t.tanggal)===m);const tot=cur.reduce((s,t)=>s+total(t),0);
+  $("balCC").textContent=rp(tot);
+  $("recCC").textContent="Tagihan "+mLabel(m)+(m===todayISO().slice(0,7)?" (berjalan)":"")+" · dari email notifikasi BNI";$("recCC").className="rec hint";
+  const all=rows.filter(t=>t.tanggal>=ATURAN_MULAI).reduce((s,t)=>s+total(t),0);
+  const shops={};cur.forEach(t=>{const k=shopOf(t.uraian);shops[k]=(shops[k]||0)+total(t);});
+  const top=Object.entries(shops).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>'<span>'+esc(k)+' <b>'+rpk(v)+'</b></span>').join("");
+  $("ioCC").innerHTML='<span>Keluar sejak 15 Sep <b>'+rpk(all)+'</b></span>'+top;
 }
 function renderHero(){
   $("todayLbl").textContent=dLong(todayISO());
@@ -662,31 +657,27 @@ function renderAcct(c){
     $("io"+r).innerHTML=a.n?'<span>Masuk <b>'+rpk(a.inn)+'</b></span><span>Keluar <b>'+rpk(a.out)+'</b></span>'+(a.start?'<span>Saldo awal <b>'+rpk(a.start)+'</b></span>':''):"";
   }
 }
-const REP_KEYS=[["rumah","Rumah NGT",""],["bonsari","Bonsari","upah & operasional"],["kebun","Kebun Wakaf",""],["adib","Kebutuhan Adib",""]];
+const REP_KEYS=[["rumah","Rumah NGT",""],["bonsari","Bonsari","upah & operasional"],["kebun","Kebun Wakaf",""],["adib","Kebutuhan Adib",""],["pribadi","Pribadi","keperluan Christo"]];
+function usageOf(rows){const sum={};let un=0;rows.forEach(t=>{if(!t.alokasi||!t.alokasi.length){un+=total(t);return;}t.alokasi.forEach(a=>sum[a.pos]=(sum[a.pos]||0)+a.jumlah);});return {sum,un};}
 function renderReport(){
+  $("repT").textContent="Laporan pemakaian "+scopeLab();
   const sel=$("repMonth"),cur=sel.value||"all";
-  const months=[...new Set(txs().filter(t=>t.rek==="BRI").map(t=>mKey(t.tanggal)))].sort().reverse();
+  const months=[...new Set(txs().filter(inScope).map(t=>mKey(t.tanggal)))].sort().reverse();
   sel.innerHTML='<option value="all">Semua bulan</option>'+months.map(m=>'<option value="'+m+'">'+mLabel(m)+'</option>').join("");
   sel.value=[...sel.options].some(o=>o.value===cur)?cur:"all";
   const inM=t=>sel.value==="all"||mKey(t.tanggal)===sel.value;
-  const bri=txs().filter(t=>t.rek==="BRI"&&t.arah==="keluar"&&inM(t));
-  const sum={};let un=0;
-  for(const t of bri){if(!t.alokasi||!t.alokasi.length){un+=total(t);continue;}t.alokasi.forEach(a=>sum[a.pos]=(sum[a.pos]||0)+a.jumlah);}
-  const tot=bri.reduce((s,t)=>s+total(t),0);
-  const masuk=txs().filter(t=>t.rek==="BRI"&&t.arah==="masuk"&&inM(t)).reduce((s,t)=>s+total(t),0);
+  const out=txs().filter(t=>inScope(t)&&t.arah==="keluar"&&inM(t));
+  const {sum,un}=usageOf(out);
+  const tot=out.reduce((s,t)=>s+total(t),0);
+  const masuk=txs().filter(t=>inScope(t)&&t.arah==="masuk"&&inM(t)).reduce((s,t)=>s+total(t),0);
   const max=Math.max(1,...REP_KEYS.map(k=>sum[k[0]]||0),un);
   const row=(k,lab,sub,v,minor)=>'<div class="rrow'+(minor?" minor":"")+'" style="--c:'+(k?COLOR(k):"var(--warn)")+'"><span class="nm"><i></i>'+lab+(sub?' <small>'+sub+'</small>':'')+'</span><span class="num">'+rp(v)+'</span>'+(minor?'':'<span class="bar"><span style="width:'+Math.max(v?2:0,v/max*100)+'%"></span></span>')+'</div>';
-  let h='<div class="tot"><span class="hint">Keluar dari BRI · '+(sel.value==="all"?"sejak dibuka 15 Sep":mLabel(sel.value))+'</span><b class="num">'+rp(tot)+'</b></div>';
+  let h='<div class="tot"><span class="hint">Keluar dari '+scopeLab()+' · '+(sel.value==="all"?"sejak 15 Sep":mLabel(sel.value))+'</span><b class="num">'+rp(tot)+'</b></div>';
   h+=REP_KEYS.map(([k,l,sb])=>row(k,l,sb,sum[k]||0)).join("");
-  if(un)h+=row(null,"Belum dipilah","",un);
-  const minor=[];
-  if(sum.pribadi)minor.push(row("pribadi","Pribadi","keperluan pribadi dari BRI",sum.pribadi,true));
+  h+=row(null,"Belum dipilah","",un);
+  const minor=[row("pindah","Pindah rekening","",sum.pindah||0,true),row("bank","Biaya bank","",sum.bank||0,true)];
   if(sum.lain)minor.push(row("lain","Lainnya","",sum.lain,true));
-  if(sum.pindah)minor.push(row("pindah","Pindah rekening","",sum.pindah,true));
-  if(sum.bank)minor.push(row("bank","Biaya bank","",sum.bank,true));
-  minor.push('<div class="rrow minor"><span class="nm">Masuk ke BRI di periode ini</span><span class="num">'+rp(masuk)+'</span></div>');
-  const bca=txs().filter(t=>t.rek==="BCA"&&t.arah==="keluar"&&inM(t));const bcaSw=bca.reduce((s,t)=>s+swapPart(t),0);
-  if(bcaSw)minor.push('<div class="rrow minor"><span class="nm">Rumah/Bonsari/Kebun dibayar dari BCA</span><span class="num" style="color:var(--bad)">'+rp(bcaSw)+'</span></div>');
+  minor.push('<div class="rrow minor"><span class="nm">'+(tab==="CC"?"Tagihan dibayar Adib (di luar halaman ini)":"Masuk ke "+scopeLab()+" di periode ini")+'</span><span class="num">'+(tab==="CC"?"–":rp(masuk))+'</span></div>');
   h+='<div class="sub">'+minor.join("")+'</div>';
   $("rep").innerHTML=h;
 }
@@ -929,27 +920,28 @@ $("addWrap").addEventListener("click",e=>{if(e.target.id==="addWrap")closeAdd();
 
 // ================================================================ rekap
 function renderRecap(){
-  const months=[...new Set(txs().map(t=>mKey(t.tanggal)))].sort();
-  const keys=["rumah","bonsari","kebun","adib"];
-  const rows=months.map(m=>{const r={m,inBRI:0,un:0,etc:0,pribBRI:0,bca:0};keys.forEach(k=>r[k]=0);
-    txs().filter(t=>mKey(t.tanggal)===m).forEach(t=>{
-      if(t.rek==="BCA"){if(t.arah==="keluar")r.bca+=total(t);return;}
-      if(t.arah==="masuk"){r.inBRI+=total(t);return;}
+  $("recapHint").textContent="Pemakaian "+scopeLab()+" per bulan";
+  const keys=["rumah","bonsari","kebun","adib","pribadi"];
+  const months=[...new Set(txs().filter(inScope).map(t=>mKey(t.tanggal)))].sort();
+  const rows=months.map(m=>{const r={m,masuk:0,un:0,etc:0};keys.forEach(k=>r[k]=0);
+    txs().filter(t=>inScope(t)&&mKey(t.tanggal)===m).forEach(t=>{
+      if(t.arah==="masuk"){r.masuk+=total(t);return;}
       if(!t.alokasi||!t.alokasi.length){r.un+=total(t);return;}
-      t.alokasi.forEach(a=>{if(keys.includes(a.pos))r[a.pos]+=a.jumlah;else if(a.pos==="pribadi")r.pribBRI+=a.jumlah;else r.etc+=a.jumlah;});});return r;});
-  const max=Math.max(1,...rows.map(r=>keys.reduce((s,k)=>s+r[k],0)+r.un+r.etc+r.pribBRI));
+      t.alokasi.forEach(a=>{if(keys.includes(a.pos))r[a.pos]+=a.jumlah;else r.etc+=a.jumlah;});});
+    r.out=keys.reduce((s,k)=>s+r[k],0)+r.etc+r.un;return r;});
+  const max=Math.max(1,...rows.map(r=>r.out));
   const mb=$("mbars");mb.innerHTML="";
   if(!rows.length){mb.innerHTML='<div class="hint">Belum ada data.</div>';}
-  rows.slice().reverse().forEach(r=>{const parts=[...keys.map(k=>[k,r[k]]),["pribadi",r.pribBRI],["lain",r.etc]];const tot=parts.reduce((s,p)=>s+p[1],0)+r.un;
-    const d=el("div","mb");d.innerHTML='<div class="h"><b>'+mLabel(r.m)+'</b><span class="num">BRI keluar '+rp(tot)+'</span></div>';
-    const st=el("div","stack");st.style.width=Math.max(4,tot/max*100)+"%";
-    parts.forEach(([k,v])=>{if(v){const i=el("i");i.style.width=(v/tot*100)+"%";i.style.background=COLOR(k);i.title=POS[k].lab+" "+rp(v);st.appendChild(i);}});
-    if(r.un){const i=el("i");i.style.width=(r.un/tot*100)+"%";i.style.background="repeating-linear-gradient(45deg,var(--line) 0 4px,transparent 4px 8px)";i.title="Belum dipilah "+rp(r.un);st.appendChild(i);}
+  rows.slice().reverse().forEach(r=>{const parts=[...keys.map(k=>[k,r[k]]),["lain",r.etc]];
+    const d=el("div","mb");d.innerHTML='<div class="h"><b>'+mLabel(r.m)+'</b><span class="num">keluar '+rp(r.out)+'</span></div>';
+    const st=el("div","stack");st.style.width=Math.max(4,r.out/max*100)+"%";
+    parts.forEach(([k,v])=>{if(v){const i=el("i");i.style.width=(v/r.out*100)+"%";i.style.background=COLOR(k);i.title=POS[k].lab+" "+rp(v);st.appendChild(i);}});
+    if(r.un){const i=el("i");i.style.width=(r.un/r.out*100)+"%";i.style.background="repeating-linear-gradient(45deg,var(--line) 0 4px,transparent 4px 8px)";i.title="Belum dipilah "+rp(r.un);st.appendChild(i);}
     d.appendChild(st);mb.appendChild(d);});
-  $("mLegend").innerHTML=keys.map(k=>'<span style="--c:'+COLOR(k)+'">'+POS[k].lab+'</span>').join("")+'<span style="--c:var(--pribadi)">Pribadi</span><span style="--c:var(--lain)">Lain-lain & biaya</span><span style="--c:var(--line)">Belum dipilah</span>';
-  const th='<thead><tr><th>Bulan</th><th>BRI masuk</th>'+keys.map(k=>'<th>'+POS[k].lab+'</th>').join("")+'<th>Pribadi dari BRI</th><th>Lain & biaya</th><th>Belum dipilah</th><th>BCA keluar</th></tr></thead>';
+  $("mLegend").innerHTML=keys.map(k=>'<span style="--c:'+COLOR(k)+'">'+POS[k].lab+'</span>').join("")+'<span style="--c:var(--lain)">Pindah, biaya & lain</span><span style="--c:var(--line)">Belum dipilah</span>';
+  const th='<thead><tr><th>Bulan</th><th>'+(tab==="CC"?"–":"Masuk")+'</th>'+keys.map(k=>'<th>'+POS[k].lab+'</th>').join("")+'<th>Pindah, biaya & lain</th><th>Belum dipilah</th><th>Total keluar</th></tr></thead>';
   const f=v=>v?fmt.format(v):"–";
-  $("recapTbl").innerHTML=th+'<tbody>'+(rows.slice().reverse().map(r=>'<tr><td>'+BLN[+r.m.slice(5)-1]+' '+r.m.slice(2,4)+'</td><td>'+f(r.inBRI)+'</td>'+keys.map(k=>'<td>'+f(r[k])+'</td>').join("")+'<td class="'+(r.pribBRI?"bad":"")+'">'+f(r.pribBRI)+'</td><td>'+f(r.etc)+'</td><td class="'+(r.un?"bad":"")+'">'+f(r.un)+'</td><td>'+f(r.bca)+'</td></tr>').join("")||'<tr><td colspan="9">Belum ada data</td></tr>')+'</tbody>';
+  $("recapTbl").innerHTML=th+'<tbody>'+(rows.slice().reverse().map(r=>'<tr><td>'+BLN[+r.m.slice(5)-1]+' '+r.m.slice(2,4)+'</td><td>'+f(r.masuk)+'</td>'+keys.map(k=>'<td>'+f(r[k])+'</td>').join("")+'<td>'+f(r.etc)+'</td><td class="'+(r.un?"bad":"")+'">'+f(r.un)+'</td><td>'+f(r.out)+'</td></tr>').join("")||'<tr><td colspan="10">Belum ada data</td></tr>')+'</tbody>';
 }
 function waText(){
   const c=calc();const L=["*Kas Christo — "+dLong(todayISO())+"*",""];
@@ -1017,7 +1009,7 @@ $("repMonth").addEventListener("change",renderReport);
 $("goPilah").onclick=()=>{setTab("ring");setView("todo");$("listSec").scrollIntoView({behavior:"smooth"});};
 document.querySelectorAll(".rtabs button").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.t)));
 document.querySelectorAll(".mini").forEach(b=>b.addEventListener("click",()=>{setTab(b.dataset.go);document.querySelector(".rtabs").scrollIntoView({behavior:"smooth",block:"start"});}));
-$("ccMonth").addEventListener("change",renderCC);
+
 $("addBtn").onclick=openAdd;$("addTop").onclick=openAdd;$("fab").onclick=openAdd;
 $("copyBtn").onclick=async()=>{const t=waText();try{await navigator.clipboard.writeText(t);$("copyMsg").textContent="Tersalin ✓";$("copyMsg").className="msg ok";}catch(_){const ta=el("textarea");ta.value=t;ta.rows=8;ta.readOnly=true;$("copyMsg").replaceChildren(ta);ta.select();}};
 $("copyLink").onclick=async()=>{const b=$("copyLink");try{await navigator.clipboard.writeText(linkChristo);b.textContent="Tersalin ✓";}catch(_){b.replaceWith(Object.assign(el("input"),{value:linkChristo,readOnly:true}));}setTimeout(()=>{b.textContent="Salin link Christo";},2500);};
@@ -1033,7 +1025,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("viewer").hidden
 
 // ================================================================ boot
 // versi halaman: kalau HP masih memegang versi lama (cache), muat ulang sekali ke versi terbaru
-const PAGE_VERSION="2026-11-02a";
+const PAGE_VERSION="2026-11-02b";
 (async()=>{try{const r=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/PAGE_VERSION="([^"]+)"/);
   if(m&&m[1]!==PAGE_VERSION){let done=null;try{done=sessionStorage.getItem("kcReload");}catch(_){}if(done!==m[1]){try{sessionStorage.setItem("kcReload",m[1]);}catch(_){}location.reload();}}}catch(_){}})();
 try{key=localStorage.getItem(KEY_STORE);}catch(_){}
