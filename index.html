@@ -17,7 +17,7 @@
   --hero:#24272B; --on-hero:#F6F4EF; --on-hero-muted:#B8BDC4; --hero-trk:rgba(255,255,255,.14); --hero-chip:rgba(255,255,255,.10);
   --accent:#2F6B4E; --accent-ink:#245A40; --accent-soft:#E2EFE6;
   --bonsari:#A8642A; --bonsari-soft:#F6E8DA; --kebun:#3E8657; --kebun-soft:#E1F0E5;
-  --rumah:#2E7590; --rumah-soft:#DDEEF4; --pribadi:#8A5BA0; --pribadi-soft:#F0E6F5;
+  --rumah:#2E7590; --rumah-soft:#DDEEF4; --sengkaling:#B8456F; --sengkaling-soft:#F8E3EB; --pribadi:#8A5BA0; --pribadi-soft:#F0E6F5;
   --on-rek:#FFFFFF; --bri:#1F5FAD; --bri-soft:#E4EEFA; --bca:#8A4FA3; --bca-soft:#F3E9F7; --bri-blk:#1F5FAD; --bca-blk:#8A4FA3; --asm:#7A5F00;--asm-soft:#FBF3D5;--asm-line:#C9A93A;--klm:#3F4A5A;--klm-soft:#E7EAF0;--cc:#B5532B; --cc-soft:#FBEBE2; --cc-blk:#9C4421; --adib:#4F5F86; --adib-soft:#E6EAF3; --pindah:#6B7280; --pindah-soft:#ECEDEF; --bank:#8A8F87; --bank-soft:#EEEFEC; --lain:#56657A; --lain-soft:#E6EAF0;
   --ok:#2E7A55; --ok-soft:#E1F1E8; --warn:#A5620E; --warn-soft:#FBEEDB; --bad:#B03A2E; --bad-soft:#F9E4E1;
   --f-ui:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -32,7 +32,7 @@
   --hero:#1F2226; --on-hero:#F2F3F4; --on-hero-muted:#A9AFB7;
   --accent:#7CC59C; --accent-ink:#9AD6B3; --accent-soft:#1E3328;
   --bonsari:#E0A16A; --bonsari-soft:#3A2A1C; --kebun:#7CC59C; --kebun-soft:#1E3328;
-  --rumah:#6CB8D4; --rumah-soft:#173039; --pribadi:#C59BDB; --pribadi-soft:#33243D;
+  --rumah:#6CB8D4; --rumah-soft:#173039; --sengkaling:#EE8FB3; --sengkaling-soft:#3A1F2A; --pribadi:#C59BDB; --pribadi-soft:#33243D;
   --on-rek:#0F1612; --bri:#7FB0EC; --bri-soft:#16263A; --bca:#CDA2E0; --bca-soft:#2C2035; --bri-blk:#2A64B4; --bca-blk:#7A4596; --asm:#E8C95A;--asm-soft:#2F2A16;--asm-line:#8C7630;--klm:#C3CBD8;--klm-soft:#262B33;--cc:#F0A07A; --cc-soft:#3A2419; --cc-blk:#A5502A; --adib:#A3B2D6; --adib-soft:#252B3A; --pindah:#AAB0B9; --pindah-soft:#262B31; --bank:#A9AEA6; --bank-soft:#262A25; --lain:#A6B4C8; --lain-soft:#242B35;
   --ok:#7CC59C; --ok-soft:#183024; --warn:#E8B45A; --warn-soft:#3A2D17; --bad:#F0918A; --bad-soft:#3B1E1B;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -14px rgba(0,0,0,.6)}}
@@ -42,7 +42,7 @@
   --hero:#1F2226; --on-hero:#F2F3F4; --on-hero-muted:#A9AFB7;
   --accent:#7CC59C; --accent-ink:#9AD6B3; --accent-soft:#1E3328;
   --bonsari:#E0A16A; --bonsari-soft:#3A2A1C; --kebun:#7CC59C; --kebun-soft:#1E3328;
-  --rumah:#6CB8D4; --rumah-soft:#173039; --pribadi:#C59BDB; --pribadi-soft:#33243D;
+  --rumah:#6CB8D4; --rumah-soft:#173039; --sengkaling:#EE8FB3; --sengkaling-soft:#3A1F2A; --pribadi:#C59BDB; --pribadi-soft:#33243D;
   --on-rek:#0F1612; --bri:#7FB0EC; --bri-soft:#16263A; --bca:#CDA2E0; --bca-soft:#2C2035; --bri-blk:#2A64B4; --bca-blk:#7A4596; --asm:#E8C95A;--asm-soft:#2F2A16;--asm-line:#8C7630;--klm:#C3CBD8;--klm-soft:#262B33;--cc:#F0A07A; --cc-soft:#3A2419; --cc-blk:#A5502A; --adib:#A3B2D6; --adib-soft:#252B3A; --pindah:#AAB0B9; --pindah-soft:#262B31; --bank:#A9AEA6; --bank-soft:#262A25; --lain:#A6B4C8; --lain-soft:#242B35;
   --ok:#7CC59C; --ok-soft:#183024; --warn:#E8B45A; --warn-soft:#3A2D17; --bad:#F0918A; --bad-soft:#3B1E1B;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -14px rgba(0,0,0,.6)}
@@ -122,7 +122,7 @@ header .sub{font-size:13px;color:var(--muted)}
 .tag{display:inline-flex;align-items:center;gap:5px;font:700 11px/1 var(--f-ui);padding:5px 8px;border-radius:999px;background:var(--soft);color:var(--muted);white-space:nowrap}
 .tag i{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
 .t-bonsari{background:var(--bonsari-soft);color:var(--bonsari)} .t-kebun{background:var(--kebun-soft);color:var(--kebun)}
-.t-rumah{background:var(--rumah-soft);color:var(--rumah)} .t-pribadi{background:var(--pribadi-soft);color:var(--pribadi)}
+.t-rumah{background:var(--rumah-soft);color:var(--rumah)} .t-sengkaling{background:var(--sengkaling-soft);color:var(--sengkaling)} .t-pribadi{background:var(--pribadi-soft);color:var(--pribadi)}
 .t-adib{background:var(--adib-soft);color:var(--adib)} .t-pindah{background:var(--pindah-soft);color:var(--pindah)} .t-bank{background:var(--bank-soft);color:var(--bank)} .t-lain{background:var(--lain-soft);color:var(--lain)}
 .t-none{background:var(--warn-soft);color:var(--warn)} .t-asm{background:var(--asm-soft);color:var(--asm);box-shadow:inset 0 0 0 1px var(--asm-line)} .t-klaim{background:var(--klm-soft);color:var(--klm)} .t-swap{background:var(--bad-soft);color:var(--bad)} .t-lock{background:var(--ok-soft);color:var(--ok)}
 .t-rek{background:var(--soft);color:var(--ink);font-family:var(--f-num);letter-spacing:.04em}
@@ -421,7 +421,7 @@ details.set .in{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
         <div class="bal" id="balCC">–</div>
         <div class="rec hint" id="recCC"></div>
         <div class="io" id="ioCC"></div>
-        <div class="use">Kartu kredit tambahan Christo; <b>tagihan dibayar Adib</b>. Untuk belanja <b>Rumah NGT</b>, <b>Bonsari</b>, <b>Kebun</b>, atau <b>Pribadi</b>.</div>
+        <div class="use">Kartu kredit tambahan Christo; <b>tagihan dibayar Adib</b>. Untuk belanja <b>Rumah NGT</b>, <b>Rumah Sengkaling</b>, <b>Bonsari</b>, <b>Kebun</b>, atau <b>Pribadi</b>.</div>
       </div>
     </div>
   </section>
@@ -511,6 +511,7 @@ const POS={
   bonsari:{lab:"Bonsari",sub:"Upah pekerja & operasional",rek:"BRI",ph:"mis. upah sortasi 3 orang, 2 hari"},
   kebun:{lab:"Kebun Wakaf",sub:"Perawatan kebun kopi",rek:"BRI",ph:"mis. pupuk 2 sak, upah babat"},
   rumah:{lab:"Rumah NGT",sub:"Kebutuhan rumah Ngantang",rek:"BRI",ph:"mis. token listrik, gas, belanja dapur"},
+  sengkaling:{lab:"Rumah Sengkaling",sub:"Kebutuhan rumah Sengkaling",rek:"*",ph:"mis. belanja dapur, galon, gas"},
   adib:{lab:"Kebutuhan Adib",sub:"Keperluan Adib di Ngantang",rek:"BRI",ph:"mis. titipan belanja Adib, bensin Adib"},
   pribadi:{lab:"Pribadi",sub:"Uang bulanan Christo",rek:"BCA",ph:"mis. pulsa, makan di luar"},
   pindah:{lab:"Pindah rekening",sub:"BRI ⇄ BCA / DANA sendiri",rek:"*",ph:"mis. ganti uang BRI yang terpakai pribadi"},
@@ -518,8 +519,8 @@ const POS={
   lain:{lab:"Lainnya",sub:"Tulis keterangannya",rek:"*",ph:"jelaskan untuk apa"}
 };
 const POTS=["bonsari","kebun","rumah","pribadi"];
-const PICK_OUT=["rumah","bonsari","kebun","adib","pribadi","pindah","lain"];
-const PICK_IN=["bonsari","kebun","rumah","pribadi","pindah","lain"];
+const PICK_OUT=["rumah","sengkaling","bonsari","kebun","adib","pribadi","pindah","lain"];
+const PICK_IN=["bonsari","kebun","rumah","sengkaling","pribadi","pindah","lain"];
 const COLOR=k=>"var(--"+k+")";
 const BLN=["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
 const BLNL=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
@@ -547,7 +548,7 @@ const cfg=()=>((store&&store.config&&store.config.main)||{});
 const isAdib=()=>role==="adib";
 const canEdit=t=>isAdib()||(!t.dikunci);
 const ATURAN_MULAI="2026-09-15"; // BRI dibuka 15 Sep 2026; sebelum itu belum ada aturan dua rekening
-const noteOptional=t=>t.alokasi&&t.alokasi.length&&t.alokasi.every(a=>a.pos==="bank"||(a.pos==="pribadi"&&t.rek==="BCA")||(t.rek==="CC"&&(a.pos==="rumah"||a.pos==="pribadi")));
+const noteOptional=t=>t.alokasi&&t.alokasi.length&&t.alokasi.every(a=>a.pos==="bank"||(a.pos==="pribadi"&&t.rek==="BCA")||(t.rek==="CC"&&(a.pos==="rumah"||a.pos==="sengkaling"||a.pos==="pribadi")));
 const rekLab=r=>r==="CC"?"CC BNI":r;
 const scopeLab=()=>tab==="ring"?"semua rekening":rekLab(tab);
 const inTabRow=t=>tab==="ring"||t.rek===tab;
@@ -676,7 +677,7 @@ function renderAcct(c){
     $("io"+r).innerHTML=a.n?'<span>Masuk <b>'+rpk(a.inn)+'</b></span><span>Keluar <b>'+rpk(a.out)+'</b></span>'+(a.start?'<span>Saldo awal <b>'+rpk(a.start)+'</b></span>':''):"";
   }
 }
-const REP_KEYS=[["rumah","Rumah NGT",""],["bonsari","Bonsari","upah & operasional"],["kebun","Kebun Wakaf",""],["adib","Kebutuhan Adib",""],["pribadi","Pribadi","keperluan Christo"]];
+const REP_KEYS=[["rumah","Rumah NGT",""],["sengkaling","Rumah Sengkaling",""],["bonsari","Bonsari","upah & operasional"],["kebun","Kebun Wakaf",""],["adib","Kebutuhan Adib",""],["pribadi","Pribadi","keperluan Christo"]];
 function usageOf(rows){const sum={},asm={};let un=0;rows.forEach(t=>{if(!t.alokasi||!t.alokasi.length){un+=total(t);return;}t.alokasi.forEach(a=>{sum[a.pos]=(sum[a.pos]||0)+a.jumlah;if(t.status==="asumsi")asm[a.pos]=(asm[a.pos]||0)+a.jumlah;});});return {sum,un,asm};}
 function renderReport(){
   $("repT").textContent="Laporan pemakaian "+scopeLab();
@@ -788,7 +789,7 @@ function editor(t,isNew){
   }
   const rule=el("div","rule");
   rule.innerHTML=inn?(isAdib()?"<b>Uang masuk.</b> Tulis asal/untuk apa uang ini, lalu kunci.":(t.dikunci?"<b>Uang masuk dari Adib</b>, sudah dicatat dan dikunci.":"<b>Uang masuk ini bukan dari rekening Adib.</b> Tulis dari mana asalnya.")):
-    t.rek==="BRI"?"<b>BRI</b> dipakai untuk Rumah NGT, Bonsari, atau Kebun Wakaf.":t.rek==="CC"?"<b>CC BNI</b> (kartu kredit, dibayar Adib). Pilih untuk apa belanja ini: Rumah NGT, Bonsari, Kebun, atau Pribadi.":"<b>BCA</b> dipakai untuk keperluan pribadi.";
+    t.rek==="BRI"?"<b>BRI</b> dipakai untuk Rumah NGT, Bonsari, atau Kebun Wakaf.":t.rek==="CC"?"<b>CC BNI</b> (kartu kredit, dibayar Adib). Pilih untuk apa belanja ini: Rumah NGT, Rumah Sengkaling, Bonsari, Kebun, atau Pribadi.":"<b>BCA</b> dipakai untuk keperluan pribadi.";
   box.appendChild(rule);
   if(t.catatanAdib&&!isAdib()){const b=el("div","infobox");b.innerHTML="<b>Catatan Adib:</b> "+esc(t.catatanAdib);box.appendChild(b);}
   if(t.status&&(t.alasan||"").trim()){const b=el("div","infobox");b.innerHTML="<b>"+(t.status==="asumsi"?"Asumsi (perkiraan, belum dicek):":"Klaim Christo:")+"</b> "+esc(t.alasan.replace(/^Klaim Christo:\s*/,""));box.appendChild(b);}
@@ -954,7 +955,7 @@ $("addWrap").addEventListener("click",e=>{if(e.target.id==="addWrap")closeAdd();
 // ================================================================ rekap
 function renderRecap(){
   $("recapHint").textContent="Pemakaian "+scopeLab()+" per bulan · "+periodLab();
-  const keys=["rumah","bonsari","kebun","adib","pribadi"];
+  const keys=["rumah","sengkaling","bonsari","kebun","adib","pribadi"];
   const months=[...new Set(txs().filter(t=>inTabRow(t)&&inPeriod(t)).map(t=>mKey(t.tanggal)))].sort();
   const rows=months.map(m=>{const r={m,masuk:0,un:0,etc:0};keys.forEach(k=>r[k]=0);
     txs().filter(t=>inTabRow(t)&&mKey(t.tanggal)===m).forEach(t=>{
@@ -1076,7 +1077,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("viewer").hidden
 
 // ================================================================ boot
 // versi halaman: kalau HP masih memegang versi lama (cache), muat ulang sekali ke versi terbaru
-const PAGE_VERSION="2026-11-02i";
+const PAGE_VERSION="2026-11-02j";
 (async()=>{try{const r=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/PAGE_VERSION="([^"]+)"/);
   if(m&&m[1]!==PAGE_VERSION){let done=null;try{done=sessionStorage.getItem("kcReload");}catch(_){}if(done!==m[1]){try{sessionStorage.setItem("kcReload",m[1]);}catch(_){}location.reload();}}}catch(_){}})();
 try{key=localStorage.getItem(KEY_STORE);}catch(_){}
