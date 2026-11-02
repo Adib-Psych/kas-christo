@@ -84,11 +84,11 @@ function rebuildView_(store) {
   const ss = SpreadsheetApp.openById(props_().getProperty('SHEET_ID'));
   const sh = ss.getSheetByName('Transaksi') || ss.insertSheet('Transaksi');
   const rows = Object.values(store.tx || {}).sort((a, b) => (a.rek + a.tanggal + (a.jam || '')).localeCompare(b.rek + b.tanggal + (b.jam || '')));
-  const out = [['Rekening', 'Tanggal', 'Jam', 'Arah', 'Jumlah', 'Biaya', 'Total', 'Uraian bank', 'Kantong', 'Catatan', 'Dicek Adib', 'Sumber', 'Saldo bank', 'ID']];
+  const out = [['Rekening', 'Tanggal', 'Jam', 'Arah', 'Jumlah', 'Biaya', 'Total', 'Uraian bank', 'Kantong', 'Catatan', 'Dicek Adib', 'Status', 'Alasan', 'Sumber', 'Saldo bank', 'ID']];
   rows.forEach(t => {
     const tot = (t.jumlah || 0) + (t.biaya || 0);
     const kant = (t.alokasi || []).map(a => a.pos + (t.alokasi.length > 1 ? ' ' + a.jumlah : '')).join(' + ');
-    out.push([t.rek, t.tanggal, t.jam || '', t.arah, t.jumlah || 0, t.biaya || 0, t.arah === 'keluar' ? -tot : tot, t.uraian || '', kant, t.ket || '', t.dikunci ? 'ya' : '', t.sumber || '', t.saldoBank == null ? '' : t.saldoBank, t.id]);
+    out.push([t.rek, t.tanggal, t.jam || '', t.arah, t.jumlah || 0, t.biaya || 0, t.arah === 'keluar' ? -tot : tot, t.uraian || '', kant, t.ket || '', t.dikunci ? 'ya' : '', t.status === 'asumsi' ? 'Asumsi' : t.status === 'klaim' ? 'Klaim Christo' : (t.dikunci ? 'Dicek Adib' : ''), t.alasan || '', t.sumber || '', t.saldoBank == null ? '' : t.saldoBank, t.id]);
   });
   sh.clearContents();
   sh.getRange(1, 1, out.length, out[0].length).setValues(out);
@@ -169,6 +169,7 @@ function cleanAlok_(t, alok) {
   if (sum !== totalOf_(t)) throw new Error('alokasi_tidak_cocok');
   return a;
 }
+const STATUS_ = ['', 'klaim', 'asumsi'];
 function rek_(r) { return r === 'BCA' ? 'BCA' : r === 'CC' ? 'CC' : 'BRI'; }
 function str_(v, n) { return String(v == null ? '' : v).slice(0, n || 300); }
 
@@ -222,8 +223,20 @@ function handle_(role, b, ctx) {
     if (b.data && b.data.saldoAwal) {
       const cfg = ctx.store.config.main || {}; cfg.saldoAwal = Object.assign({}, cfg.saldoAwal || {}, b.data.saldoAwal); put_(ctx, 'config', 'main', cfg);
     }
-    log_(role, 'import', 'tx', baru + ' baru · ' + diperbarui + ' diperbarui · ' + digabung + ' digabung');
-    return { changed: true, extra: { hasil: { baru, diperbarui, digabung } } };
+    // ubahan massal dari Adib (tutup buku: klaim Christo / asumsi + alasan)
+    let diubah = 0;
+    ((b.data && b.data.ubah) || []).forEach(u => {
+      const cur = u && ctx.store.tx[u.id]; if (!cur) return;
+      const next = Object.assign({}, cur);
+      if ('status' in u) next.status = STATUS_.indexOf(u.status) >= 0 ? u.status : '';
+      if ('alasan' in u) next.alasan = str_(u.alasan, 300);
+      if ('ket' in u) next.ket = str_(u.ket, 300);
+      if ('dikunci' in u) { next.dikunci = !!u.dikunci; next.dikunciPada = u.dikunci ? now : ''; }
+      if ('alokasi' in u) { next.alokasi = cleanAlok_(next, u.alokasi); next.dipilahOleh = next.status === 'asumsi' ? 'asumsi' : 'adib'; next.dipilahPada = now; }
+      put_(ctx, 'tx', u.id, next); diubah++;
+    });
+    log_(role, 'import', 'tx', baru + ' baru · ' + diperbarui + ' diperbarui · ' + digabung + ' digabung' + (diubah ? ' · ' + diubah + ' diubah' : ''));
+    return { changed: true, extra: { hasil: { baru, diperbarui, digabung, diubah } } };
   }
 
   if (COLS.indexOf(col) < 0) throw new Error('koleksi');
@@ -274,6 +287,8 @@ function handle_(role, b, ctx) {
     ['ket', 'uraian', 'tanggal', 'jam'].forEach(k => { if (k in d) next[k] = str_(d[k], 300); });
     if ('nota' in d) next.nota = Array.isArray(d.nota) ? d.nota.slice(0, 6).map(String) : [];
     if ('catatanAdib' in d) next.catatanAdib = str_(d.catatanAdib, 300);
+    if ('status' in d) next.status = STATUS_.indexOf(d.status) >= 0 ? d.status : '';
+    if ('alasan' in d) next.alasan = str_(d.alasan, 300);
     if ('dikunci' in d) { next.dikunci = !!d.dikunci; next.dikunciPada = d.dikunci ? now : ''; }
     if (cur.sumber === 'manual') {
       if ('jumlah' in d) next.jumlah = Math.round(+d.jumlah || 0);
