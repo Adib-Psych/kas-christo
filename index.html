@@ -686,8 +686,8 @@ function renderReport(){
     const RK=[["BRI","var(--bri)"],["BCA","var(--bca)"],["CC","var(--cc)"]];
     const per=RK.map(([r,c])=>{const rows=out.filter(t=>t.rek===r);const v=rows.reduce((s,t)=>s+total(t),0);const u=usageOf(rows);return {r,c,v,prib:u.sum.pribadi||0,un:u.un};});
     const mx=Math.max(1,...per.map(x=>x.v));
-    h+='<div class="hint" style="margin-top:2px"><b>Per rekening</b> <small>(bar berdiri = bank)</small></div><div class="vbars">'+per.map(x=>'<div class="vb" style="--c:'+x.c+'"><span class="amt">'+rpk(x.v)+'</span><span class="col"><span style="height:'+Math.max(x.v?3:0,x.v/mx*100)+'%"></span></span><span class="nm"><i></i>'+rekLab(x.r)+'</span><small>'+(tot?Math.round(x.v/tot*100):0)+'% · pribadi '+rpk(x.prib)+(x.un?'<br>belum dipilah '+rpk(x.un):'')+'</small></div>').join("")+'</div>';
-    h+='<div class="hint" style="margin-top:6px"><b>Per kantong</b> <small>(bar rebah = dipakai untuk apa)</small></div>';
+    h+='<div class="hint" style="margin-top:2px"><b>Per rekening</b></div><div class="vbars">'+per.map(x=>'<div class="vb" style="--c:'+x.c+'"><span class="amt">'+rpk(x.v)+'</span><span class="col"><span style="height:'+Math.max(x.v?3:0,x.v/mx*100)+'%"></span></span><span class="nm"><i></i>'+rekLab(x.r)+'</span><small>'+(tot?Math.round(x.v/tot*100):0)+'% · pribadi '+rpk(x.prib)+(x.un?'<br>belum dipilah '+rpk(x.un):'')+'</small></div>').join("")+'</div>';
+    h+='<div class="hint" style="margin-top:6px"><b>Per kantong</b></div>';
   }
   h+=REP_KEYS.map(([k,l,sb])=>row(k,l,sb,sum[k]||0)).join("");
   h+=row(null,"Belum dipilah","",un);
@@ -1059,7 +1059,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("viewer").hidden
 
 // ================================================================ boot
 // versi halaman: kalau HP masih memegang versi lama (cache), muat ulang sekali ke versi terbaru
-const PAGE_VERSION="2026-11-02f";
+const PAGE_VERSION="2026-11-02g";
 (async()=>{try{const r=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/PAGE_VERSION="([^"]+)"/);
   if(m&&m[1]!==PAGE_VERSION){let done=null;try{done=sessionStorage.getItem("kcReload");}catch(_){}if(done!==m[1]){try{sessionStorage.setItem("kcReload",m[1]);}catch(_){}location.reload();}}}catch(_){}})();
 try{key=localStorage.getItem(KEY_STORE);}catch(_){}
