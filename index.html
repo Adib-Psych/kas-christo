@@ -546,7 +546,8 @@ const ATURAN_MULAI="2026-09-15"; // BRI dibuka 15 Sep 2026; sebelum itu belum ad
 const noteOptional=t=>t.alokasi&&t.alokasi.length&&t.alokasi.every(a=>a.pos==="bank"||(a.pos==="pribadi"&&t.rek==="BCA")||(t.rek==="CC"&&(a.pos==="rumah"||a.pos==="pribadi")));
 const rekLab=r=>r==="CC"?"CC BNI":r;
 const scopeLab=()=>tab==="ring"?"semua rekening":rekLab(tab);
-const inScope=t=>(tab==="ring"||t.rek===tab)&&t.tanggal>=ATURAN_MULAI;
+const inTabRow=t=>tab==="ring"||t.rek===tab;
+const inScope=t=>inTabRow(t)&&t.tanggal>=ATURAN_MULAI;
 let tab=(()=>{try{return localStorage.getItem("kcTab")||"ring";}catch(_){return "ring";}})();
 const needsNote=t=>t.arah==="keluar"&&t.alokasi&&t.alokasi.length&&!(t.ket||"").trim()&&!noteOptional(t);
 // "Perlu diisi" = belum dipilah atau belum ada catatan. Masuk hanya untuk Adib.
@@ -671,17 +672,18 @@ function usageOf(rows){const sum={};let un=0;rows.forEach(t=>{if(!t.alokasi||!t.
 function renderReport(){
   $("repT").textContent="Laporan pemakaian "+scopeLab();
   const sel=$("repMonth"),cur=sel.value||"all";
-  const months=[...new Set(txs().filter(inScope).map(t=>mKey(t.tanggal)))].sort().reverse();
-  sel.innerHTML='<option value="all">Semua bulan</option>'+months.map(m=>'<option value="'+m+'">'+mLabel(m)+'</option>').join("");
+  const months=[...new Set(txs().filter(inTabRow).map(t=>mKey(t.tanggal)))].sort().reverse();
+  const old=months.some(m=>m+"-31"<ATURAN_MULAI);
+  sel.innerHTML='<option value="all">Sejak 15 Sep 2026</option>'+(old?'<option value="full">Semua bulan ('+BLN[+months[months.length-1].slice(5)-1]+'–'+BLN[+months[0].slice(5)-1]+' '+months[0].slice(0,4)+')</option>':'')+months.map(m=>'<option value="'+m+'">'+mLabel(m)+'</option>').join("");
   sel.value=[...sel.options].some(o=>o.value===cur)?cur:"all";
-  const inM=t=>sel.value==="all"||mKey(t.tanggal)===sel.value;
-  const out=txs().filter(t=>inScope(t)&&t.arah==="keluar"&&inM(t));
+  const inM=t=>sel.value==="all"?t.tanggal>=ATURAN_MULAI:sel.value==="full"||mKey(t.tanggal)===sel.value;
+  const out=txs().filter(t=>inTabRow(t)&&t.arah==="keluar"&&inM(t));
   const {sum,un}=usageOf(out);
   const tot=out.reduce((s,t)=>s+total(t),0);
-  const masuk=txs().filter(t=>inScope(t)&&t.arah==="masuk"&&inM(t)).reduce((s,t)=>s+total(t),0);
+  const masuk=txs().filter(t=>inTabRow(t)&&t.arah==="masuk"&&inM(t)).reduce((s,t)=>s+total(t),0);
   const max=Math.max(1,...REP_KEYS.map(k=>sum[k[0]]||0),un);
   const row=(k,lab,sub,v,minor)=>'<div class="rrow'+(minor?" minor":"")+'" style="--c:'+(k?COLOR(k):"var(--warn)")+'"><span class="nm"><i></i>'+lab+(sub?' <small>'+sub+'</small>':'')+'</span><span class="num">'+rp(v)+'</span>'+(minor?'':'<span class="bar"><span style="width:'+Math.max(v?2:0,v/max*100)+'%"></span></span>')+'</div>';
-  let h='<div class="tot"><span class="hint">Keluar dari '+scopeLab()+' · '+(sel.value==="all"?"sejak 15 Sep":mLabel(sel.value))+'</span><b class="num">'+rp(tot)+'</b></div>';
+  let h='<div class="tot"><span class="hint">Keluar dari '+scopeLab()+' · '+(sel.value==="all"?"sejak 15 Sep":sel.value==="full"?"semua bulan":mLabel(sel.value))+'</span><b class="num">'+rp(tot)+'</b></div>';
   if(tab==="ring"){
     const RK=[["BRI","var(--bri)"],["BCA","var(--bca)"],["CC","var(--cc)"]];
     const per=RK.map(([r,c])=>{const rows=out.filter(t=>t.rek===r);const v=rows.reduce((s,t)=>s+total(t),0);const u=usageOf(rows);return {r,c,v,prib:u.sum.pribadi||0,un:u.un};});
@@ -938,9 +940,9 @@ $("addWrap").addEventListener("click",e=>{if(e.target.id==="addWrap")closeAdd();
 function renderRecap(){
   $("recapHint").textContent="Pemakaian "+scopeLab()+" per bulan";
   const keys=["rumah","bonsari","kebun","adib","pribadi"];
-  const months=[...new Set(txs().filter(inScope).map(t=>mKey(t.tanggal)))].sort();
+  const months=[...new Set(txs().filter(inTabRow).map(t=>mKey(t.tanggal)))].sort();
   const rows=months.map(m=>{const r={m,masuk:0,un:0,etc:0};keys.forEach(k=>r[k]=0);
-    txs().filter(t=>inScope(t)&&mKey(t.tanggal)===m).forEach(t=>{
+    txs().filter(t=>inTabRow(t)&&mKey(t.tanggal)===m).forEach(t=>{
       if(t.arah==="masuk"){r.masuk+=total(t);return;}
       if(!t.alokasi||!t.alokasi.length){r.un+=total(t);return;}
       t.alokasi.forEach(a=>{if(keys.includes(a.pos))r[a.pos]+=a.jumlah;else r.etc+=a.jumlah;});});
@@ -1059,7 +1061,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("viewer").hidden
 
 // ================================================================ boot
 // versi halaman: kalau HP masih memegang versi lama (cache), muat ulang sekali ke versi terbaru
-const PAGE_VERSION="2026-11-02g";
+const PAGE_VERSION="2026-11-02h";
 (async()=>{try{const r=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/PAGE_VERSION="([^"]+)"/);
   if(m&&m[1]!==PAGE_VERSION){let done=null;try{done=sessionStorage.getItem("kcReload");}catch(_){}if(done!==m[1]){try{sessionStorage.setItem("kcReload",m[1]);}catch(_){}location.reload();}}}catch(_){}})();
 try{key=localStorage.getItem(KEY_STORE);}catch(_){}
