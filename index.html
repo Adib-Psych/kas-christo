@@ -964,7 +964,7 @@ async function call(body){
   if(!j.ok){const code=j.error==="tidak diizinkan"?"invalid_argument":j.error;throw Object.assign(new Error(j.error),{code});}
   return j;
 }
-function take(j){if(j&&j.data){store=j.data;store.tx=store.tx||{};store.config=store.config||{};}if(j&&j.linkChristo)linkChristo=j.linkChristo;
+function take(j){if(j&&j.data){store=j.data;store.tx=store.tx||{};store.config=store.config||{};saveCache();}if(j&&j.linkChristo)linkChristo=j.linkChristo;
   $("sync").textContent="Tersinkron "+new Intl.DateTimeFormat("id-ID",{timeZone:TZ,hour:"2-digit",minute:"2-digit"}).format(new Date())+" WIB";}
 let wq=Promise.resolve();
 async function write(body){pending++;const run=wq.then(()=>call(body));wq=run.catch(()=>{});
@@ -987,7 +987,7 @@ async function uploadNota(file){const b=await shrink(file);if(b.size>6*1024*1024
 
 let snT=null;function snack(t){const s=$("snack");s.textContent=t;s.hidden=false;clearTimeout(snT);snT=setTimeout(()=>s.hidden=true,2600);}
 function gate(t,m,ask){$("gate").hidden=false;$("app").hidden=true;$("gateTitle").textContent=t;$("gateMsg").textContent=m;$("gateForm").hidden=!ask;}
-function logout(){key=null;try{localStorage.removeItem(KEY_STORE);}catch(_){}gate("Link sudah tidak berlaku","Minta link baru ke Adib lewat WhatsApp, lalu buka link itu di HP ini.",true);}
+function logout(){key=null;try{localStorage.removeItem(KEY_STORE);localStorage.removeItem(CACHE_KEY);}catch(_){}gate("Link sudah tidak berlaku","Minta link baru ke Adib lewat WhatsApp, lalu buka link itu di HP ini.",true);}
 
 function start(){
   $("gate").hidden=true;$("app").hidden=false;$("fab").hidden=false;
@@ -997,9 +997,16 @@ function start(){
   setInterval(()=>{if(!document.hidden)refresh();},60000);
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)refresh();});
 }
+const CACHE_KEY="kcCache";
+function saveCache(){try{localStorage.setItem(CACHE_KEY,JSON.stringify({key,role,data:store,linkChristo,t:Date.now()}));}catch(_){}}
+function readCache(){try{const c=JSON.parse(localStorage.getItem(CACHE_KEY)||"null");return c&&c.key===key&&c.data?c:null;}catch(_){return null;}}
+let started=false;
 async function login(){
-  try{const j=await call({op:"load"});try{localStorage.setItem(KEY_STORE,key);}catch(_){}role=j.role;take(j);start();}
-  catch(e){if(e.code==="kunci"){logout();return;}gate("Belum tersambung",e.code==="no_api"?"Halaman belum disambungkan ke penyimpanan. Hubungi Adib.":"Periksa sinyal internet, lalu muat ulang halaman ini.");}
+  // tampilkan data terakhir di perangkat ini dulu (instan), lalu ambil data terbaru
+  const c=readCache();
+  if(c){role=c.role;linkChristo=c.linkChristo||linkChristo;store=c.data;start();started=true;$("sync").textContent="Memuat data terbaru…";}
+  try{const j=await call({op:"load"});try{localStorage.setItem(KEY_STORE,key);}catch(_){}role=j.role;take(j);if(started)renderAll();else{start();started=true;}}
+  catch(e){if(e.code==="kunci"){logout();return;}if(started){$("sync").textContent="Belum tersambung · menampilkan data terakhir";return;}gate("Belum tersambung",e.code==="no_api"?"Halaman belum disambungkan ke penyimpanan. Hubungi Adib.":"Periksa sinyal internet, lalu muat ulang halaman ini.");}
 }
 
 // ================================================================ events
@@ -1025,7 +1032,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("viewer").hidden
 
 // ================================================================ boot
 // versi halaman: kalau HP masih memegang versi lama (cache), muat ulang sekali ke versi terbaru
-const PAGE_VERSION="2026-11-02b";
+const PAGE_VERSION="2026-11-02c";
 (async()=>{try{const r=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/PAGE_VERSION="([^"]+)"/);
   if(m&&m[1]!==PAGE_VERSION){let done=null;try{done=sessionStorage.getItem("kcReload");}catch(_){}if(done!==m[1]){try{sessionStorage.setItem("kcReload",m[1]);}catch(_){}location.reload();}}}catch(_){}})();
 try{key=localStorage.getItem(KEY_STORE);}catch(_){}

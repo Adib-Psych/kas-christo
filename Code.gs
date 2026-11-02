@@ -106,22 +106,56 @@ function roleOf_(key) {
   return null;
 }
 
+// ---- cache baca cepat (CacheService) — data dibaca tanpa kunci, ditulis ulang setiap ada perubahan
+const CACHE_CHUNK = 25000;
+function cacheGet_() {
+  try {
+    const c = CacheService.getScriptCache(); const n = +(c.get('store_n') || 0); if (!n) return null;
+    const keys = []; for (let i = 0; i < n; i++) keys.push('store_' + i);
+    const parts = c.getAll(keys); let s = '';
+    for (let i = 0; i < n; i++) { const p = parts['store_' + i]; if (p == null) return null; s += p; }
+    return JSON.parse(s);
+  } catch (e) { return null; }
+}
+function cachePut_(store) {
+  try {
+    const s = JSON.stringify(store); const o = {}; const n = Math.ceil(s.length / CACHE_CHUNK);
+    for (let i = 0; i < n; i++) o['store_' + i] = s.slice(i * CACHE_CHUNK, (i + 1) * CACHE_CHUNK);
+    o.store_n = String(n); CacheService.getScriptCache().putAll(o, 21600);
+  } catch (e) {}
+}
+function out_(role, store, extra) {
+  const out = Object.assign({ ok: true, role, data: store }, extra || {});
+  if (role === 'adib') out.linkChristo = PAGE_URL + '#k=' + props_().getProperty('KEY_CHRISTO');
+  return json_(out);
+}
 function doPost(e) {
   let body; try { body = JSON.parse(e.postData.contents); } catch (x) { return json_({ ok: false, error: 'bad_json' }); }
   const role = roleOf_(body.key);
   if (!role) return json_({ ok: false, error: 'kunci' });
+  // baca saja: tanpa kunci, dari cache bila ada
+  if (body.op === 'load') {
+    try {
+      let store = cacheGet_();
+      if (!store) { store = readAll_().store; cachePut_(store); }
+      return out_(role, store);
+    } catch (x) { return json_({ ok: false, error: String(x && x.message || x) }); }
+  }
   const lock = LockService.getScriptLock();
   try { lock.waitLock(20000); } catch (x) { return json_({ ok: false, error: 'sibuk' }); }
+  let ctx, res;
   try {
-    const ctx = readAll_();
-    const res = handle_(role, body, ctx);
-    if (res.changed) { try { rebuildView_(ctx.store); } catch (x) {} }
-    const out = Object.assign({ ok: true, role, data: ctx.store }, res.extra || {});
-    if (role === 'adib') out.linkChristo = PAGE_URL + '#k=' + props_().getProperty('KEY_CHRISTO');
-    return json_(out);
+    ctx = readAll_();
+    res = handle_(role, body, ctx);
+    if (res.changed) cachePut_(ctx.store);
   } catch (x) {
+    try { CacheService.getScriptCache().remove('store_n'); } catch (y) {}
+    lock.releaseLock();
     return json_({ ok: false, error: String(x && x.message || x) });
-  } finally { lock.releaseLock(); }
+  }
+  lock.releaseLock();
+  if (res.changed) { try { rebuildView_(ctx.store); } catch (x) {} }
+  return out_(role, ctx.store, res.extra);
 }
 
 function deny_() { throw new Error('tidak diizinkan'); }
