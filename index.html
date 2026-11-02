@@ -673,6 +673,13 @@ function renderReport(){
   const max=Math.max(1,...REP_KEYS.map(k=>sum[k[0]]||0),un);
   const row=(k,lab,sub,v,minor)=>'<div class="rrow'+(minor?" minor":"")+'" style="--c:'+(k?COLOR(k):"var(--warn)")+'"><span class="nm"><i></i>'+lab+(sub?' <small>'+sub+'</small>':'')+'</span><span class="num">'+rp(v)+'</span>'+(minor?'':'<span class="bar"><span style="width:'+Math.max(v?2:0,v/max*100)+'%"></span></span>')+'</div>';
   let h='<div class="tot"><span class="hint">Keluar dari '+scopeLab()+' · '+(sel.value==="all"?"sejak 15 Sep":mLabel(sel.value))+'</span><b class="num">'+rp(tot)+'</b></div>';
+  if(tab==="ring"){
+    const RK=[["BRI","var(--bri)"],["BCA","var(--bca)"],["CC","var(--cc)"]];
+    const per=RK.map(([r,c])=>{const rows=out.filter(t=>t.rek===r);const v=rows.reduce((s,t)=>s+total(t),0);const u=usageOf(rows);return {r,c,v,prib:u.sum.pribadi||0,un:u.un};});
+    const mx=Math.max(1,...per.map(x=>x.v));
+    h+='<div class="hint" style="margin-top:2px"><b>Per rekening</b></div>'+per.map(x=>'<div class="rrow" style="--c:'+x.c+'"><span class="nm"><i></i><span style="white-space:nowrap">'+rekLab(x.r)+'</span> <small>'+(tot?Math.round(x.v/tot*100):0)+'% · pribadi '+rpk(x.prib)+(x.un?' · belum dipilah '+rpk(x.un):'')+'</small></span><span class="num">'+rp(x.v)+'</span><span class="bar"><span style="width:'+Math.max(x.v?2:0,x.v/mx*100)+'%"></span></span></div>').join("");
+    h+='<div class="hint" style="margin-top:6px"><b>Per kantong</b> (gabungan)</div>';
+  }
   h+=REP_KEYS.map(([k,l,sb])=>row(k,l,sb,sum[k]||0)).join("");
   h+=row(null,"Belum dipilah","",un);
   const minor=[row("pindah","Pindah rekening","",sum.pindah||0,true),row("bank","Biaya bank","",sum.bank||0,true)];
@@ -1043,7 +1050,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("viewer").hidden
 
 // ================================================================ boot
 // versi halaman: kalau HP masih memegang versi lama (cache), muat ulang sekali ke versi terbaru
-const PAGE_VERSION="2026-11-02d";
+const PAGE_VERSION="2026-11-02e";
 (async()=>{try{const r=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/PAGE_VERSION="([^"]+)"/);
   if(m&&m[1]!==PAGE_VERSION){let done=null;try{done=sessionStorage.getItem("kcReload");}catch(_){}if(done!==m[1]){try{sessionStorage.setItem("kcReload",m[1]);}catch(_){}location.reload();}}}catch(_){}})();
 try{key=localStorage.getItem(KEY_STORE);}catch(_){}
