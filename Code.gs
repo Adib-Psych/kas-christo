@@ -8,7 +8,7 @@
  * Fungsi bantu dari editor: tampilkanLink() · gantiKunciChristo() · cadanganMingguan()
  */
 const PAGE_URL = 'https://adib-psych.github.io/kas-christo/';
-const POS_KELUAR = ['rumah', 'sengkaling', 'bonsari', 'kebun', 'adib', 'pribadi', 'pindah', 'bank', 'lain'];
+const POS_KELUAR = ['rumah', 'sengkaling', 'bonsari', 'kebun', 'adib', 'pribadi', 'rokok', 'pindah', 'bank', 'lain'];
 const POS_MASUK = ['rumah', 'sengkaling', 'bonsari', 'kebun', 'adib', 'pribadi', 'pindah', 'lain'];
 const COLS = ['tx', 'config'];
 const MAX_NOTA = 6 * 1024 * 1024;
