@@ -956,13 +956,24 @@ function waText(){
 }
 
 // ================================================================ backend (Apps Script)
-function errText(e){const c=e&&e.code;return c==="network"?"Tidak tersambung. Periksa sinyal, lalu coba lagi.":c==="invalid_argument"?"Akun ini tidak punya izin untuk itu.":c==="alokasi_tidak_cocok"?"Pembagian kantong belum pas dengan jumlahnya.":c==="too_large"?"Terlalu besar.":c==="sibuk"?"Sedang sibuk, coba lagi sebentar.":"Gagal menyimpan. Coba lagi.";}
-async function call(body){
+function errText(e){const c=e&&e.code;return c==="network"?"Tidak tersambung. Periksa sinyal, lalu coba lagi.":c==="server"?"Server sedang diperbarui. Tunggu sebentar, lalu simpan lagi.":c==="invalid_argument"?"Akun ini tidak punya izin untuk itu.":c==="alokasi_tidak_cocok"?"Pembagian kantong belum pas dengan jumlahnya.":c==="too_large"?"Terlalu besar.":c==="sibuk"?"Sedang sibuk, coba lagi sebentar.":"Gagal menyimpan. Coba lagi.";}
+async function call1(body){
   if(!API_URL)throw Object.assign(new Error("no_api"),{code:"no_api"});
   let r;try{r=await fetch(API_URL,{method:"POST",body:JSON.stringify(Object.assign({key},body))});}catch(e){throw Object.assign(new Error("network"),{code:"network"});}
-  let j;try{j=await r.json();}catch(e){throw Object.assign(new Error("network"),{code:"network"});}
+  let j;try{j=await r.json();}catch(e){throw Object.assign(new Error("server"),{code:"server"});} // balasan bukan JSON: server sedang diperbarui, belum diproses
   if(!j.ok){const code=j.error==="tidak diizinkan"?"invalid_argument":j.error;throw Object.assign(new Error(j.error),{code});}
   return j;
+}
+// Coba ulang diam-diam saat server sibuk/sedang diperbarui (mis. saat ada pembaruan sistem), supaya tidak muncul error.
+async function call(body){
+  const readOnly=body.op==="load"||body.op==="nota";const waits=[1500,3000,6000];
+  for(let i=0;;i++){
+    try{const j=await call1(body);if(i)$("sync").textContent="Tersambung kembali ✓";return j;}
+    catch(e){const retry=e.code==="sibuk"||e.code==="server"||(readOnly&&e.code==="network");
+      if(!retry||i>=waits.length)throw e;
+      try{$("sync").textContent="Menyambung ulang…";}catch(_){}
+      await new Promise(r=>setTimeout(r,waits[i]));}
+  }
 }
 function take(j){if(j&&j.data){store=j.data;store.tx=store.tx||{};store.config=store.config||{};saveCache();}if(j&&j.linkChristo)linkChristo=j.linkChristo;
   $("sync").textContent="Tersinkron "+new Intl.DateTimeFormat("id-ID",{timeZone:TZ,hour:"2-digit",minute:"2-digit"}).format(new Date())+" WIB";}
@@ -1032,7 +1043,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("viewer").hidden
 
 // ================================================================ boot
 // versi halaman: kalau HP masih memegang versi lama (cache), muat ulang sekali ke versi terbaru
-const PAGE_VERSION="2026-11-02c";
+const PAGE_VERSION="2026-11-02d";
 (async()=>{try{const r=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/PAGE_VERSION="([^"]+)"/);
   if(m&&m[1]!==PAGE_VERSION){let done=null;try{done=sessionStorage.getItem("kcReload");}catch(_){}if(done!==m[1]){try{sessionStorage.setItem("kcReload",m[1]);}catch(_){}location.reload();}}}catch(_){}})();
 try{key=localStorage.getItem(KEY_STORE);}catch(_){}
