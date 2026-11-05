@@ -613,7 +613,12 @@ function calc(){
     const last=mut[mut.length-1];
     const viaMut=rows.filter(t=>t.sumber==="mutasi").reduce((s,t)=>s+(t.arah==="masuk"?total(t):-total(t)),start);
     const first=rows.map(t=>t.tanggal).sort()[0];
-    acct[r]={n:rows.length,start,inn,out,est:start+inn-out,last,first,ok:last?Math.abs(viaMut-last.saldoBank)<2:null,diff:last?viaMut-last.saldoBank:0};
+    const after=last?rows.filter(t=>t.sumber!=="mutasi"&&t.tanggal>last.tanggal):[];
+    const afterNet=after.reduce((s,t)=>s+(t.arah==="masuk"?total(t):-total(t)),0);
+    const lastAfter=after.map(t=>t.tanggal).sort().pop()||"";
+    const okv=last?Math.abs(viaMut-last.saldoBank)<2:null;
+    const live=last&&okv?last.saldoBank+afterNet:start+inn-out;
+    acct[r]={n:rows.length,start,inn,out,est:start+inn-out,last,first,ok:okv,diff:last?viaMut-last.saldoBank:0,live,nAfter:after.length,lastAfter};
   }
   return {swapBRI,swapBCA,swapRows,acct};
 }
@@ -630,7 +635,7 @@ const ccMonths=()=>[...new Set(txs().filter(t=>t.rek==="CC").map(t=>mKey(t.tangg
 function renderTabs(c){
   const n=r=>txs().filter(t=>(r==="ring"||t.rek===r)&&isTodo(t)).length;
   [["ring","bRing"],["BRI","bBRI"],["BCA","bBCA"],["CC","bCC"]].forEach(([r,id])=>{const k=n(r);$(id).textContent=k?String(k):"";});
-  ["BRI","BCA"].forEach(r=>{const a=c.acct[r];$("m"+r).textContent=a.n?"Rp "+rpk(a.last&&a.ok?a.last.saldoBank:a.est):"–";$("m"+r+"s").textContent=a.last?"saldo "+dShort(a.last.tanggal):"saldo";});
+  ["BRI","BCA"].forEach(r=>{const a=c.acct[r];$("m"+r).textContent=a.n?"Rp "+rpk(a.live):"–";$("m"+r+"s").textContent=a.nAfter?"perkiraan "+dShort(a.lastAfter):(a.last?"saldo "+dShort(a.last.tanggal):"saldo");});
   const ms=ccMonths();const m=ms[0];
   if(m){const tot=txs().filter(t=>t.rek==="CC"&&t.arah==="keluar"&&mKey(t.tanggal)===m).reduce((s,t)=>s+total(t),0);$("mCC").textContent="Rp "+rpk(tot);$("mCCs").textContent=BLN[+m.slice(5,7)-1]+" "+m.slice(0,4)+(m===todayISO().slice(0,7)?" · berjalan":"");}
   else{$("mCC").textContent="–";$("mCCs").textContent="belum ada data";}
@@ -670,10 +675,10 @@ function renderHero(){
 }
 function renderAcct(c){
   for(const r of ["BRI","BCA"]){const a=c.acct[r];
-    $("bal"+r).textContent=a.n?rp(a.last&&a.ok?a.last.saldoBank:a.est):"Belum ada data";
+    $("bal"+r).textContent=a.n?rp(a.live):"Belum ada data";
     const rec=$("rec"+r);
     if(!a.n){rec.textContent="Menunggu mutasi";rec.className="rec hint";}
-    else if(a.last){rec.textContent=a.ok?"✓ Cocok dengan saldo bank "+dShort(a.last.tanggal):"Selisih "+rp(a.diff)+" dari saldo bank";rec.className="rec "+(a.ok?"ok":"bad");}
+    else if(a.last){rec.textContent=a.ok?("✓ Cocok dengan saldo bank "+dShort(a.last.tanggal)+(a.nAfter?" · ditambah "+a.nAfter+" catatan manual sesudahnya (perkiraan s/d "+dShort(a.lastAfter)+")":"")):"Selisih "+rp(a.diff)+" dari saldo bank";rec.className="rec "+(a.ok?"ok":"bad");}
     else{rec.textContent="Perkiraan dari catatan manual";rec.className="rec hint";}
     $("io"+r).innerHTML=a.n?'<span>Masuk <b>'+rpk(a.inn)+'</b></span><span>Keluar <b>'+rpk(a.out)+'</b></span>'+(a.start?'<span>Saldo awal <b>'+rpk(a.start)+'</b></span>':''):"";
   }
@@ -980,7 +985,7 @@ function renderRecap(){
 }
 function waText(){
   const c=calc();const L=["*Kas Christo — "+dLong(todayISO())+"*",""];
-  ["BRI","BCA"].forEach(r=>{const a=c.acct[r];if(a.n)L.push("• Saldo "+r+": "+rp(a.last&&a.ok?a.last.saldoBank:a.est));});
+  ["BRI","BCA"].forEach(r=>{const a=c.acct[r];if(a.n)L.push("• Saldo "+r+": "+rp(a.live)+(a.nAfter?" (perkiraan s/d "+dShort(a.lastAfter)+")":""));});
   {const m=ccMonths()[0];if(m)L.push("• CC BNI "+mLabel(m)+": "+rp(txs().filter(t=>t.rek==="CC"&&t.arah==="keluar"&&mKey(t.tanggal)===m).reduce((s,t)=>s+total(t),0)));}
   const sum={};let un=0;txs().filter(t=>t.rek==="BRI"&&t.arah==="keluar").forEach(t=>{if(!t.alokasi||!t.alokasi.length){un+=total(t);return;}t.alokasi.forEach(a=>sum[a.pos]=(sum[a.pos]||0)+a.jumlah);});
   L.push("","Pemakaian BRI (semua bulan):");REP_KEYS.forEach(([k,l])=>L.push("• "+l+": "+rp(sum[k]||0)));if(un)L.push("• Belum dipilah: "+rp(un));
@@ -1078,7 +1083,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("viewer").hidden
 
 // ================================================================ boot
 // versi halaman: kalau HP masih memegang versi lama (cache), muat ulang sekali ke versi terbaru
-const PAGE_VERSION="2026-11-02k";
+const PAGE_VERSION="2026-11-06l";
 (async()=>{try{const r=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/PAGE_VERSION="([^"]+)"/);
   if(m&&m[1]!==PAGE_VERSION){let done=null;try{done=sessionStorage.getItem("kcReload");}catch(_){}if(done!==m[1]){try{sessionStorage.setItem("kcReload",m[1]);}catch(_){}location.reload();}}}catch(_){}})();
 try{key=localStorage.getItem(KEY_STORE);}catch(_){}
