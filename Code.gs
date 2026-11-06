@@ -10,7 +10,7 @@
 const PAGE_URL = 'https://adib-psych.github.io/kas-christo/';
 const POS_KELUAR = ['rumah', 'sengkaling', 'bonsari', 'kebun', 'adib', 'reimburse', 'pribadi', 'rokok', 'pindah', 'bank', 'lain'];
 const POS_MASUK = ['rumah', 'sengkaling', 'bonsari', 'kebun', 'adib', 'pribadi', 'pindah', 'lain'];
-const COLS = ['tx', 'config'];
+const COLS = ['tx', 'config', 'pending'];
 const MAX_NOTA = 6 * 1024 * 1024;
 
 function props_() { return PropertiesService.getScriptProperties(); }
@@ -246,6 +246,42 @@ function handle_(role, b, ctx) {
     const cur = ctx.store.config[id] || {};
     const v = op === 'set' ? b.data : Object.assign({}, cur, b.data);
     put_(ctx, 'config', id, v); log_(role, op, col, id); return { changed: false };
+  }
+
+  // ---- pending akhir bulan: cek saldo (Christo & Adib), catatan & tanda lunas (Adib)
+  if (col === 'pending') {
+    ctx.store.pending = ctx.store.pending || {};
+    if (op === 'add') {
+      const d = b.data || {};
+      const jenis = ['ceksaldo', 'catatan', 'lunas'].indexOf(d.jenis) >= 0 ? d.jenis : '';
+      if (!jenis) throw new Error('isian');
+      if (jenis !== 'ceksaldo' && !isAdib) deny_();
+      const nid = 'pd-' + Utilities.getUuid().slice(0, 12);
+      const p = { id: nid, jenis: jenis, oleh: role, dibuat: now };
+      if (jenis === 'ceksaldo') {
+        p.rek = rek_(d.rek); p.tanggal = str_(d.tanggal, 10); p.saldo = Math.round(+d.saldo); p.ket = str_(d.ket, 200);
+        if (p.rek === 'CC' || !/^\d{4}-\d{2}-\d{2}$/.test(p.tanggal) || !isFinite(p.saldo) || String(d.saldo).trim() === '') throw new Error('isian');
+      } else {
+        p.bulan = str_(d.bulan, 7); p.teks = str_(d.teks, 300); p.jumlah = Math.round(+d.jumlah || 0); p.kunci = str_(d.kunci, 60); p.selesai = jenis === 'lunas';
+        if (!/^\d{4}-\d{2}$/.test(p.bulan)) throw new Error('isian');
+      }
+      put_(ctx, 'pending', nid, p); log_(role, 'add', 'pending', nid);
+      return { changed: true, extra: { id: nid } };
+    }
+    const curP = ctx.store.pending[id];
+    if (!curP) throw new Error('tidak_ada');
+    if (op === 'delete') {
+      if (!isAdib && !(curP.oleh === role && curP.jenis === 'ceksaldo')) deny_();
+      del_(ctx, 'pending', id); log_(role, 'delete', 'pending', id); return { changed: true };
+    }
+    if (op === 'update') {
+      if (!isAdib) deny_();
+      const d = b.data || {}; const next = Object.assign({}, curP);
+      if ('selesai' in d) { next.selesai = !!d.selesai; next.selesaiPada = d.selesai ? now : ''; }
+      if ('teks' in d) next.teks = str_(d.teks, 300);
+      put_(ctx, 'pending', id, next); log_(role, 'update', 'pending', id); return { changed: true };
+    }
+    throw new Error('op');
   }
 
   // ---- transaksi

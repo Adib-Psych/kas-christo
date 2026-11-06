@@ -143,6 +143,12 @@ header .sub{font-size:13px;color:var(--muted)}
 .rrow .bar span b{position:absolute;top:0;right:0;bottom:0;background:repeating-linear-gradient(135deg,rgba(255,255,255,.55) 0 3px,transparent 3px 6px)}
 .k.kas{border-left:3px dashed var(--asm-line);background:var(--asm-soft);color:var(--asm);font-style:italic}
 .tx.arah-in .tag.t-asm{background:#FFF6D6;color:#6B5600} .tx.arah-in .tag.t-klaim{background:#fff;color:#3F4A5A} .tx.arah-in .k.kas{background:rgba(255,255,255,.14);color:#fff;border-left-color:#FFE7A0}
+.pbtns{display:flex;gap:6px}.pform{margin-bottom:8px}.prow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.prow input,.prow select{flex:1;min-width:0}
+.pend .pi{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line)}.pend .pi:first-of-type{border-top:0}
+.pend .pi .ic{flex:0 0 26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;background:var(--warn-soft);color:var(--warn)}
+.pend .pi.ok .ic{background:var(--soft);color:var(--ink)}.pend .pi.done{opacity:.55}.pend .pi.done .ptx b{text-decoration:line-through}
+.pend .pi .ptx{flex:1;min-width:0;font-size:13.5px;line-height:1.45}.pend .pi .ptx small{display:block;color:var(--muted);font-size:12px}
+.pend .pi .pact{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.pend .pgrp{font:700 11.5px var(--f-ui);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:10px 0 2px}.pend .pgrp:first-child{margin-top:0}
 .health{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding:10px;border-radius:12px;border:1px dashed var(--line)}.health .hint{flex-basis:100%}
 .ringsaldo{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:8px 10px;margin-bottom:8px;border-radius:10px;background:var(--soft);font-size:13px}.ringsaldo .hint{flex-basis:100%}
 .asmnote{font-size:12px;color:var(--asm)}
@@ -429,6 +435,22 @@ details.set .in{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
     </div>
   </section>
 
+  <!-- PENDING AKHIR BULAN -->
+  <section aria-labelledby="pendT" data-tab="ring BRI BCA CC" id="pendSec">
+    <div class="sec-head"><h2 id="pendT">Pending akhir bulan</h2><span class="pbtns"><button class="btn small ghost" type="button" id="noteBtn" hidden>+ Catatan</button><button class="btn small" type="button" id="cekBtn">Cek saldo</button></span></div>
+    <form class="card pad pform" id="cekForm" hidden>
+      <div class="hint" style="margin-bottom:8px">Isi saldo persis seperti di BRImo / m-BCA. Kalau berbeda dengan catatan, selisihnya muncul di sini sampai dijelaskan.</div>
+      <div class="prow"><select id="cekRek" aria-label="Rekening"><option value="BRI">BRI</option><option value="BCA">BCA</option></select><input type="date" id="cekTgl" aria-label="Tanggal"><input id="cekSaldo" inputmode="numeric" placeholder="Saldo, mis. 250.000" aria-label="Saldo"></div>
+      <input id="cekKet" placeholder="Catatan (opsional)" aria-label="Catatan" style="margin-top:6px;width:100%">
+      <div class="prow" style="margin-top:8px"><button class="btn small" type="submit">Simpan</button><button class="btn small ghost" type="button" id="cekBatal">Batal</button><span class="hint" id="cekMsg"></span></div>
+    </form>
+    <form class="card pad pform" id="noteForm" hidden>
+      <input id="noteTeks" placeholder="Hal yang perlu dibereskan akhir bulan" aria-label="Catatan pending" style="width:100%">
+      <div class="prow" style="margin-top:6px"><input id="noteJml" inputmode="numeric" placeholder="Nominal (opsional)" aria-label="Nominal"><button class="btn small" type="submit">Simpan</button><button class="btn small ghost" type="button" id="noteBatal">Batal</button></div>
+    </form>
+    <div class="card pad pend" id="pend"></div>
+  </section>
+
   <!-- LAPORAN BRI -->
 
   <section aria-labelledby="repT" data-tab="ring BRI BCA CC">
@@ -629,7 +651,7 @@ function calc(){
   }
   return {swapBRI,swapBCA,swapRows,acct};
 }
-function renderAll(){if(!store)return;renderHero();const c=calc();renderAcct(c);renderReport();renderCC();renderSwap(c);renderTabs(c);renderFilters();renderList();renderRecap();}
+function renderAll(){if(!store)return;renderHero();const c=calc();renderAcct(c);renderPending(c);renderReport();renderCC();renderSwap(c);renderTabs(c);renderFilters();renderList();renderRecap();}
 // ================================================================ tab rekening
 function applyTab(){
   $("ruleT").textContent=tab==="CC"?"Tagihan kartu":"Saldo rekening · "+periodLab();$("ruleHint").textContent=tab==="CC"?"Menurut email notifikasi BNI":"Menurut mutasi bank";
@@ -637,7 +659,7 @@ function applyTab(){
   document.querySelectorAll(".rtabs button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.t===tab)));
   document.querySelectorAll(".mini").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.go===tab)));
 }
-function setTab(t){tab=t;try{localStorage.setItem("kcTab",t);}catch(_){}openId=null;draft=null;applyTab();if(store)renderAcct(calc());renderReport();renderRecap();renderFilters();renderList();}
+function setTab(t){tab=t;try{localStorage.setItem("kcTab",t);}catch(_){}openId=null;draft=null;applyTab();if(store){const c=calc();renderAcct(c);renderPending(c);}renderReport();renderRecap();renderFilters();renderList();}
 const ccMonths=()=>[...new Set(txs().filter(t=>t.rek==="CC").map(t=>mKey(t.tanggal)))].sort().reverse();
 function renderTabs(c){
   const n=r=>txs().filter(t=>(r==="ring"||t.rek===r)&&isTodo(t)).length;
@@ -679,6 +701,40 @@ function renderHero(){
   $("hOk").textContent=ok+" / "+n;$("hNoNote").textContent=String(noNote);
   const c=calc();const sw=c.swapBRI+c.swapBCA;$("hSwap").textContent=sw?rp(sw):"Rp 0";$("hSwap").className=sw?"warn":"";
   $("goPilah").hidden=!(none||noNote);
+}
+const pendList=()=>Object.values((store&&store.pending)||{});
+const pendMonth=()=>period.length===7?period:todayISO().slice(0,7);
+function saldoSelisih(c,cs){const a=c.acct[cs.rek];if(!a||!a.n)return null;const net=x=>x.reduce((s,t)=>s+(t.arah==="masuk"?total(t):-total(t)),0);const perk=a.live-net(a.rows.filter(t=>t.tanggal>cs.tanggal));return {perk,diff:perk-cs.saldo};}
+function renderPending(c){
+  const box=$("pend");if(!box)return;const m=pendMonth();const inM=d=>(d||"").slice(0,7)===m;
+  $("pendT").textContent="Pending akhir bulan · "+mLabel(m);$("noteBtn").hidden=!isAdib();
+  const P=pendList();let h="";let open=0;
+  // 1. selisih saldo (cek saldo terakhir per rekening di bulan ini)
+  let g1="";
+  for(const r of ["BRI","BCA"]){
+    const cs=P.filter(p=>p.jenis==="ceksaldo"&&p.rek===r&&inM(p.tanggal)).sort((a,b)=>(a.tanggal+a.dibuat).localeCompare(b.tanggal+b.dibuat)).pop();
+    if(!cs)continue;const x=saldoSelisih(c,cs);if(!x)continue;const ok=Math.abs(x.diff)<1;if(!ok)open++;
+    g1+='<div class="pi'+(ok?" ok":"")+'"><span class="ic">'+(ok?"✓":"!")+'</span><div class="ptx"><b>'+r+(ok?" cocok dengan saldo bank":" selisih "+rp(Math.abs(x.diff)))+'</b><small>Cek saldo '+dShort(cs.tanggal)+' oleh '+(cs.oleh==="adib"?"Adib":"Christo")+': saldo bank '+rp(cs.saldo)+' · catatan '+rp(x.perk)+(ok?"":x.diff>0?" → ada uang keluar "+rp(x.diff)+" yang belum dicatat":" → ada uang masuk "+rp(-x.diff)+" yang belum dicatat")+(cs.ket?' · '+esc(cs.ket):'')+'</small>'+(!ok&&isAdib()?'<div class="pact"><button class="btn small ghost" type="button" data-book="'+cs.id+'">Bukukan selisih → '+(x.diff>0?"Pribadi Christo":"uang masuk")+'</button></div>':'')+'</div></div>';
+  }
+  if(g1)h+='<div class="pgrp">Selisih saldo</div>'+g1;
+  // 2. reimburse
+  const reim=txs().filter(t=>inM(t.tanggal)).reduce((s,t)=>s+(t.alokasi||[]).filter(a=>a.pos==="reimburse").reduce((q,a)=>q+a.jumlah,0),0);
+  if(reim){const lunas=P.find(p=>p.jenis==="lunas"&&p.kunci==="reimburse-"+m);if(!lunas)open++;
+    h+='<div class="pgrp">Reimburse Adib</div><div class="pi'+(lunas?" done":"")+'"><span class="ic">'+(lunas?"✓":"Rp")+'</span><div class="ptx"><b>Ganti ke BCA Christo '+rp(reim)+'</b><small>Total kantong Reimburse Adib '+mLabel(m)+(lunas?' · ditandai sudah diganti '+dShort(lunas.dibuat.slice(0,10)):'')+'</small>'+(!lunas&&isAdib()?'<div class="pact"><button class="btn small ghost" type="button" data-lunas="'+reim+'">Tandai sudah diganti</button></div>':'')+'</div></div>';}
+  // 3. asumsi menunggu konfirmasi
+  const asm=txs().filter(t=>inM(t.tanggal)&&t.status==="asumsi").sort((a,b)=>b.tanggal.localeCompare(a.tanggal));
+  if(asm.length){open+=asm.length;h+='<div class="pgrp">Asumsi menunggu konfirmasi Adib ('+asm.length+')</div>'+asm.slice(0,6).map(t=>'<div class="pi"><span class="ic">?</span><div class="ptx"><b>'+esc(titleOf(t))+' · '+rp(total(t))+'</b><small>'+t.rek+' · '+dShort(t.tanggal)+' · '+esc((t.alokasi||[]).map(a=>POS[a.pos]?POS[a.pos].lab:a.pos).join(" + "))+(alasanOf(t)?' · '+esc(alasanOf(t)):'')+'</small></div></div>').join("")+(asm.length>6?'<div class="hint">…dan '+(asm.length-6)+' lainnya</div>':'');}
+  // 4. catatan manual
+  const notes=P.filter(p=>p.jenis==="catatan"&&p.bulan===m).sort((a,b)=>(a.dibuat||"").localeCompare(b.dibuat||""));
+  if(notes.length){h+='<div class="pgrp">Catatan</div>'+notes.map(n=>{if(!n.selesai)open++;return '<div class="pi'+(n.selesai?" done":"")+'"><span class="ic">'+(n.selesai?"✓":"•")+'</span><div class="ptx"><b>'+esc(n.teks)+(n.jumlah?' · '+rp(n.jumlah):'')+'</b>'+(n.selesai&&n.selesaiPada?'<small>selesai '+dShort(n.selesaiPada.slice(0,10))+'</small>':'')+(isAdib()?'<div class="pact"><button class="btn small ghost" type="button" data-done="'+n.id+'" data-v="'+(n.selesai?0:1)+'">'+(n.selesai?"Buka lagi":"Tandai selesai")+'</button></div>':'')+'</div></div>';}).join("");}
+  if(!h)h='<div class="empty">Tidak ada yang pending untuk '+mLabel(m)+'. Pakai <b>Cek saldo</b> untuk mencocokkan saldo dengan BRImo / m-BCA. 🌱</div>';
+  else h='<div class="hint" style="margin-bottom:4px">'+(open?open+" hal perlu dibereskan sebelum tutup bulan.":"Semua sudah beres untuk bulan ini.")+'</div>'+h;
+  box.innerHTML=h;
+  box.querySelectorAll("[data-book]").forEach(b=>b.onclick=async()=>{const cs=pendList().find(p=>p.id===b.dataset.book);const x=saldoSelisih(calc(),cs);if(!x||Math.abs(x.diff)<1)return;b.disabled=true;
+    const data={rek:cs.rek,tanggal:cs.tanggal,arah:x.diff>0?"keluar":"masuk",jumlah:Math.abs(x.diff),ket:"Selisih tak tercatat (cek saldo "+dShort(cs.tanggal)+": bank "+rp(cs.saldo)+", catatan "+rp(x.perk)+")"};if(x.diff>0)data.alokasi=[{pos:"pribadi",jumlah:Math.abs(x.diff)}];
+    try{await write({op:"add",col:"tx",data});renderAll();}catch(e){b.disabled=false;alert("Gagal: "+(e.message||e));}});
+  box.querySelectorAll("[data-lunas]").forEach(b=>b.onclick=async()=>{b.disabled=true;try{await write({op:"add",col:"pending",data:{jenis:"lunas",bulan:m,kunci:"reimburse-"+m,jumlah:+b.dataset.lunas,teks:"Reimburse "+mLabel(m)+" sudah diganti"}});renderAll();}catch(e){b.disabled=false;}});
+  box.querySelectorAll("[data-done]").forEach(b=>b.onclick=async()=>{b.disabled=true;try{await write({op:"update",col:"pending",id:b.dataset.done,data:{selesai:b.dataset.v==="1"}});renderAll();}catch(e){b.disabled=false;}});
 }
 function periodRange(){if(period==="all")return null;if(period.length===4)return [period+"-01-01",period+"-12-31"];return [period+"-01",period+"-31"];}
 function renderAcct(c){
@@ -750,7 +806,7 @@ function fillPeriod(sel){
   if(![...sel.options].some(o=>o.value===period))period="all";
   sel.value=period;
 }
-function setPeriod(v){period=v||"all";openId=null;draft=null;if(store)renderAcct(calc());renderCC();renderReport();renderRecap();renderFilters();renderList();}
+function setPeriod(v){period=v||"all";openId=null;draft=null;if(store){const c=calc();renderAcct(c);renderPending(c);}renderCC();renderReport();renderRecap();renderFilters();renderList();}
 function renderFilters(){
   fillPeriod($("fMonth"));
   const ps=$("fPos"),pc=ps.value||"all";
@@ -1041,7 +1097,7 @@ async function call(body){
       await new Promise(r=>setTimeout(r,waits[i]));}
   }
 }
-function take(j){if(j&&j.data){store=j.data;store.tx=store.tx||{};store.config=store.config||{};saveCache();}if(j&&j.linkChristo)linkChristo=j.linkChristo;
+function take(j){if(j&&j.data){store=j.data;store.tx=store.tx||{};store.config=store.config||{};store.pending=store.pending||{};saveCache();}if(j&&j.linkChristo)linkChristo=j.linkChristo;
   $("sync").textContent="Tersinkron "+new Intl.DateTimeFormat("id-ID",{timeZone:TZ,hour:"2-digit",minute:"2-digit"}).format(new Date())+" WIB";}
 let wq=Promise.resolve();
 async function write(body){pending++;const run=wq.then(()=>call(body));wq=run.catch(()=>{});
@@ -1098,6 +1154,15 @@ $("addBtn").onclick=openAdd;$("addTop").onclick=openAdd;$("fab").onclick=openAdd
 $("copyBtn").onclick=async()=>{const t=waText();try{await navigator.clipboard.writeText(t);$("copyMsg").textContent="Tersalin ✓";$("copyMsg").className="msg ok";}catch(_){const ta=el("textarea");ta.value=t;ta.rows=8;ta.readOnly=true;$("copyMsg").replaceChildren(ta);ta.select();}};
 $("copyLink").onclick=async()=>{const b=$("copyLink");try{await navigator.clipboard.writeText(linkChristo);b.textContent="Tersalin ✓";}catch(_){b.replaceWith(Object.assign(el("input"),{value:linkChristo,readOnly:true}));}setTimeout(()=>{b.textContent="Salin link Christo";},2500);};
 $("sBCA").addEventListener("input",e=>{const n=digits(e.target.value);e.target.value=n?fmt.format(n):"";});
+$("cekBtn").onclick=()=>{const f=$("cekForm");f.hidden=!f.hidden;$("noteForm").hidden=true;if(!f.hidden){$("cekTgl").value=todayISO();$("cekRek").value=tab==="BCA"?"BCA":"BRI";$("cekMsg").textContent="";$("cekSaldo").focus();}};
+$("cekBatal").onclick=()=>{$("cekForm").hidden=true;};
+$("cekSaldo").addEventListener("input",e=>{const v=digits(e.target.value);e.target.value=v?fmt.format(v):"";});
+$("cekForm").onsubmit=async e=>{e.preventDefault();const sv=$("cekSaldo").value.trim();if(!sv){$("cekMsg").textContent="Isi saldonya dulu.";return;}
+  $("cekMsg").textContent="Menyimpan…";try{await write({op:"add",col:"pending",data:{jenis:"ceksaldo",rek:$("cekRek").value,tanggal:$("cekTgl").value,saldo:digits(sv),ket:$("cekKet").value.trim()}});$("cekForm").hidden=true;$("cekSaldo").value="";$("cekKet").value="";renderAll();}catch(err){$("cekMsg").textContent="Gagal menyimpan.";}};
+$("noteBtn").onclick=()=>{const f=$("noteForm");f.hidden=!f.hidden;$("cekForm").hidden=true;if(!f.hidden)$("noteTeks").focus();};
+$("noteBatal").onclick=()=>{$("noteForm").hidden=true;};
+$("noteJml").addEventListener("input",e=>{const v=digits(e.target.value);e.target.value=v?fmt.format(v):"";});
+$("noteForm").onsubmit=async e=>{e.preventDefault();const t=$("noteTeks").value.trim();if(!t)return;try{await write({op:"add",col:"pending",data:{jenis:"catatan",bulan:pendMonth(),teks:t,jumlah:digits($("noteJml").value)}});$("noteForm").hidden=true;$("noteTeks").value="";$("noteJml").value="";renderAll();}catch(_){}};
 $("saveCfg").onclick=async()=>{const c=Object.assign({},cfg());c.saldoAwal=Object.assign({},c.saldoAwal||{},{BCA:{jumlah:digits($("sBCA").value),tanggal:$("sBCAtgl").value}});
   try{await write({op:"set",col:"config",id:"main",data:c});$("setMsg").textContent="Saldo awal tersimpan.";$("setMsg").className="msg ok";renderAll();}catch(e){$("setMsg").textContent=errText(e);$("setMsg").className="msg err";}};
 $("impBtn").onclick=async()=>{let d;try{d=JSON.parse($("impTxt").value);}catch(_){$("setMsg").textContent="JSON tidak terbaca.";$("setMsg").className="msg err";return;}
@@ -1109,7 +1174,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("viewer").hidden
 
 // ================================================================ boot
 // versi halaman: kalau HP masih memegang versi lama (cache), muat ulang sekali ke versi terbaru
-const PAGE_VERSION="2026-11-06m";
+const PAGE_VERSION="2026-11-06n";
 (async()=>{try{const r=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/PAGE_VERSION="([^"]+)"/);
   if(m&&m[1]!==PAGE_VERSION){let done=null;try{done=sessionStorage.getItem("kcReload");}catch(_){}if(done!==m[1]){try{sessionStorage.setItem("kcReload",m[1]);}catch(_){}location.reload();}}}catch(_){}})();
 try{key=localStorage.getItem(KEY_STORE);}catch(_){}
